@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # libtorchの場所
-set(LIBTORCH_PATH "/Users/nozawarikuta/libtorch")
+set(LIBTORCH_PATH "/home/nozawa/mambaforge/envs/md/lib/python3.13/site-packages/torch")
 set(Torch_DIR "${LIBTORCH_PATH}/share/cmake/Torch")
 
 # libtorchのCMakeモジュールを探す

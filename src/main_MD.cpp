@@ -3,16 +3,16 @@
 
 int main(){
     //デバイス
-    torch::Device device = torch::kCPU;
+    torch::Device device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU);
 
     //定数
-    const RealType dt = 0.5;
+    const RealType dt = 0.1;
     const RealType cutoff = 5.0;
     const RealType margin = 1.0;
 
     //パス
-    const std::string data_path = "../data/diamond_structure_2.xyz";
-    const std::string model_path = "../models/deployed_model.pt";
+    const std::string data_path = "./data/saved_structure.xyz";
+    const std::string model_path = "./models/deployed_model_SiO2.pt";
 
     //MDオブジェクトの実体化
     MD md = MD(dt, cutoff, margin, data_path, model_path, device);
@@ -21,5 +21,5 @@ int main(){
     md.init_vel_MB(300.0);
 
     //シミュレーションの開始
-    md.NVE(2e+3);
+    md.NVE_log(1e+5);
 }

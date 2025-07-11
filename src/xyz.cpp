@@ -351,8 +351,8 @@ void xyz::save_atoms(std::string data_path, Atoms atoms){
     //3行目以降に原子の種類と座標と力
     for(IntType i = 0; i < n_atoms; i ++){
         output << atoms.types()[i] << " "
-               << atoms.positions()[i][0] << " " << atoms.positions()[i][1] << " " << atoms.positions()[i][2] << " "
-               << atoms.forces()[i][0] << " " << atoms.forces()[i][1] << " " << atoms.forces()[i][2] << std::endl;
+               << atoms.positions()[i][0].item<RealType>() << " " << atoms.positions()[i][1].item<RealType>() << " " << atoms.positions()[i][2].item<RealType>() << " "
+               << atoms.forces()[i][0].item<RealType>() << " " << atoms.forces()[i][1].item<RealType>() << " " << atoms.forces()[i][2].item<RealType>() << std::endl;
     }
 
     //ファイルを閉じる

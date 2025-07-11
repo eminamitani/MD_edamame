@@ -91,6 +91,49 @@ void MD::NVE(const float tsim) {
     }
 }
 
+//シミュレーション
+void MD::NVE_log(const float tsim) {
+    torch::TensorOptions options = torch::TensorOptions().device(device_);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)" << std::endl;
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+
+    //周期境界条件のもとで、何個目の箱のミラーに位置しているのかを保存する変数 (N, 3)
+    torch::Tensor box = torch::zeros({num_atoms_.item<IntType>(), 3}, options.dtype(kIntType));
+
+    long t = 0; //現在のステップ数
+    const long steps = tsim / dt_.item<RealType>();    //総ステップ数
+    print_energies(t);
+
+    //ログスケールでの出力のための変数
+    const auto logbin = std::pow(10.0, 1.0 / 9);
+    int counter = 5;
+    auto checker = 1e-3 * std::pow(logbin, counter);
+
+    while(t < steps){
+        atoms_.velocities_update(dt_);      //速度の更新（1回目）
+        atoms_.positions_update(dt_, box);  //位置の更新
+        NL_.update(atoms_);                 //NLの確認と更新
+        inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
+        atoms_.velocities_update(dt_);      //速度の更新（2回目）
+
+        t ++;
+
+        //出力
+        //ログスケールで出力
+        if(dt_.item<RealType>() * t > checker){
+            checker *= logbin;
+            print_energies(t);
+        }
+    }
+}
+
 void MD::NVE_from_grad(const float tsim){
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
@@ -125,6 +168,46 @@ void MD::NVE_from_grad(const float tsim){
             print_energies(t);
         }
     }
+}
+
+//シミュレーション後、構造を保存
+void MD::NVE_save(const float tsim){
+    torch::TensorOptions options = torch::TensorOptions().device(device_);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)" << std::endl;
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+
+    //周期境界条件のもとで、何個目の箱のミラーに位置しているのかを保存する変数 (N, 3)
+    torch::Tensor box = torch::zeros({num_atoms_.item<IntType>(), 3}, options.dtype(kIntType));
+
+    long t = 0; //現在のステップ数
+    const long steps = tsim / dt_.item<RealType>();    //総ステップ数
+    print_energies(t);
+
+    while(t < steps){
+        atoms_.velocities_update(dt_);      //速度の更新（1回目）
+        atoms_.positions_update(dt_, box);  //位置の更新
+        NL_.update(atoms_);                 //NLの確認と更新
+        inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
+        atoms_.velocities_update(dt_);      //速度の更新（2回目）
+
+        t ++;
+
+        //出力
+        //とりあえず100ステップごとに出力
+        if(t % 100 == 0){
+            print_energies(t);
+        }
+    }
+
+    std::string save_path = "data/saved_structure.xyz";
+    xyz::save_atoms(save_path, atoms_);
 }
 
 //-----補助用関数-----

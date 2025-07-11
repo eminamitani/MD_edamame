@@ -19,6 +19,8 @@ class MD{
 
         //シミュレーション
         void NVE(const float tsim);
+        void NVE_log(const float tsim);
+        void NVE_save(const float tsim);
         void NVE_from_grad(const float tsim);                                     //エネルギーだけモデルで推論し力はその微分で求める
 
     private:
