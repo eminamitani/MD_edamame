@@ -1,5 +1,7 @@
 #include "MD.hpp"
 #include "config.h"
+#include <chrono>
+#include <thread>
 
 int main(){
     //デバイス
@@ -14,6 +16,9 @@ int main(){
     const std::string data_path = "./data/saved_structure.xyz";
     const std::string model_path = "./models/deployed_model_SiO2.pt";
 
+    //現在時刻を記録
+    auto start = std::chrono::steady_clock::now();
+
     //MDオブジェクトの実体化
     MD md = MD(dt, cutoff, margin, data_path, model_path, device);
 
@@ -22,4 +27,12 @@ int main(){
 
     //シミュレーションの開始
     md.NVE_log(1e+5);
+
+    //終了時刻を記録
+    auto end = std::chrono::steady_clock::now();
+
+    //実行時間を計算
+    double elapsed_s = std::chrono::duration<double>(end - start).count();
+
+    std::cout << "処理にかかった時間：" << elapsed_s << "s" << std::endl;
 }
