@@ -20,7 +20,7 @@ NoseHooverThermostats::NoseHooverThermostats(const torch::Tensor length, const t
     masses_[0] *= dof;
 }
 
-NoseHooverThermostats::NoseHooverThermostats() : NoseHooverThermostats(torch::tensor(1.0), torch::tensor(0.0), torch::tensor(0.0), torch::tensor(0.0), torch::kCPU) {}
+NoseHooverThermostats::NoseHooverThermostats() : NoseHooverThermostats(torch::tensor(1.0), torch::tensor(300.0), torch::tensor(0.0), torch::tensor(0.0), torch::kCPU) {}
 
 void NoseHooverThermostats::update(Atoms& atoms, torch::Tensor dt) {
     torch::Tensor scale = torch::tensor(1.0, torch::TensorOptions().dtype(kRealType).device(device_));

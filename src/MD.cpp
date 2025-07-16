@@ -55,7 +55,7 @@ void MD::init_vel_MB(const RealType float_targ){
 }
 
 //シミュレーション
-void MD::NVE(const float tsim) {
+void MD::NVE(const RealType tsim) {
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     //ログの見出しを出力しておく
@@ -92,7 +92,7 @@ void MD::NVE(const float tsim) {
 }
 
 //シミュレーション
-void MD::NVE_log(const float tsim) {
+void MD::NVE_log(const RealType tsim) {
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     //ログの見出しを出力しておく
@@ -134,7 +134,7 @@ void MD::NVE_log(const float tsim) {
     }
 }
 
-void MD::NVE_from_grad(const float tsim){
+void MD::NVE_from_grad(const RealType tsim){
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     //ログの見出しを出力しておく
@@ -171,7 +171,7 @@ void MD::NVE_from_grad(const float tsim){
 }
 
 //シミュレーション後、構造を保存
-void MD::NVE_save(const float tsim){
+void MD::NVE_save(const RealType tsim){
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     //ログの見出しを出力しておく
@@ -210,13 +210,15 @@ void MD::NVE_save(const float tsim){
     xyz::save_atoms(save_path, atoms_);
 }
 
-void MD::NVT(const float tsim, const IntType length, const float targ_tmp) {
+void MD::NVT(const RealType tsim, const IntType length, const RealType tau, const RealType targ_tmp) {
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     //熱浴の初期化
-    torch::Tensor dof = 3 * atoms_.size() - 3;
-    torch::Tensor tau = dt_ * 50;
-    Thermostats_ = NoseHooverThermostats(torch::tensor(length, options), torch::tensor(targ_tmp, options), dof, tau, device_);
+    torch::Tensor dof_ = 3 * atoms_.size() - 3;
+    torch::Tensor tau_ = torch::tensor(tau, options.dtype(kRealType));
+    torch::Tensor length_ = torch::tensor(length, options.dtype(kIntType));
+    torch::Tensor targ_tmp_ = torch::tensor(targ_tmp, options.dtype(kRealType));
+    Thermostats_ = NoseHooverThermostats(length_, targ_tmp_, dof_, tau_, device_);
 
     //ログの見出しを出力しておく
     std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;

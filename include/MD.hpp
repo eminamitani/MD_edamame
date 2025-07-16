@@ -16,15 +16,15 @@ class MD{
         MD(RealType dt, RealType cutoff, RealType margin, std::string data_path, std::string model_path, torch::Device device = torch::kCPU); 
 
         //初期化
-        void init_vel_MB(const float float_targ);                       //原子の速度の初期化
+        void init_vel_MB(const RealType float_targ);                       //原子の速度の初期化
 
         //シミュレーション
-        void NVE(const float tsim);
-        void NVE_log(const float tsim);
-        void NVE_save(const float tsim);
-        void NVE_from_grad(const float tsim);                                     //エネルギーだけモデルで推論し力はその微分で求める
+        void NVE(const RealType tsim);
+        void NVE_log(const RealType tsim);
+        void NVE_save(const RealType tsim);
+        void NVE_from_grad(const RealType tsim);                                     //エネルギーだけモデルで推論し力はその微分で求める
 
-        void NVT(const float tsim, const IntType length, const float targ_tmp);
+        void NVT(const RealType tsim, const IntType length, const RealType tau, const RealType targ_tmp);
 
     private:
         //その他（補助用関数）
