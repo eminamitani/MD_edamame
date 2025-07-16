@@ -12,6 +12,10 @@ int main(){
     const RealType cutoff = 5.0;
     const RealType margin = 1.0;
 
+    const RealType tau = dt * 50;
+    const IntType chain_length = 4;
+    const RealType temperature = 300.0;
+
     //パス
     const std::string data_path = "../data/diamond_structure_2.xyz";
     const std::string model_path = "../models/deployed_model.pt";
@@ -26,7 +30,7 @@ int main(){
     md.init_vel_MB(300.0);
 
     //シミュレーションの開始
-    md.NVT(1e+5, 4, 300.0);
+    md.NVT(1e+5, chain_length, tau, temperature);
 
     //終了時刻を記録
     auto end = std::chrono::steady_clock::now();
