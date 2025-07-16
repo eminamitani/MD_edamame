@@ -22,8 +22,8 @@ MD::MD(torch::Tensor dt, torch::Tensor cutoff, torch::Tensor margin, std::string
     atoms_.apply_pbc();
 
     //使用する定数のデバイスを移動しておく。
-    boltzmann_constant.to(device);
-    conversion_factor.to(device);
+    boltzmann_constant_ = torch::tensor(boltzmann_constant, torch::TensorOptions().dtype(kRealType).device(device_));
+    conversion_factor_ = torch::tensor(conversion_factor, torch::TensorOptions().dtype(kRealType).device(device_));
 }
 
 MD::MD(RealType dt, RealType cutoff, RealType margin, std::string data_path, std::string model_path, torch::Device device)
@@ -42,7 +42,7 @@ void MD::init_vel_MB(const RealType float_targ){
     //この時、(eV / amu) -> ((Å / fs) ^ 2)
     torch::Tensor masses = atoms_.masses();
     torch::Tensor temp = torch::tensor(float_targ, torch::TensorOptions().dtype(kRealType).device(device_));
-    torch::Tensor sigma = torch::sqrt((boltzmann_constant * float_targ * conversion_factor) / masses);
+    torch::Tensor sigma = torch::sqrt((boltzmann_constant_ * float_targ * conversion_factor_) / masses);
     //velocitiesにsigmaを掛けることで分散を調節。
     //この時、velocities (N, 3)とsigma (N, )を計算するために、sigma (N, ) -> (N, 1)
     velocities *= sigma.unsqueeze(1);
@@ -210,15 +210,60 @@ void MD::NVE_save(const float tsim){
     xyz::save_atoms(save_path, atoms_);
 }
 
+void MD::NVT(const float tsim, const IntType length, const float targ_tmp) {
+    torch::TensorOptions options = torch::TensorOptions().device(device_);
+
+    //熱浴の初期化
+    torch::Tensor dof = 3 * atoms_.size() - 3;
+    torch::Tensor tau = dt_ * 50;
+    Thermostats_ = NoseHooverThermostats(torch::tensor(length, options), torch::tensor(targ_tmp, options), dof, tau, device_);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+
+    //周期境界条件のもとで、何個目の箱のミラーに位置しているのかを保存する変数 (N, 3)
+    torch::Tensor box = torch::zeros({num_atoms_.item<IntType>(), 3}, options.dtype(kIntType));
+
+    long t = 0; //現在のステップ数
+    const long steps = tsim / dt_.item<RealType>();    //総ステップ数
+    print_energies(t);
+
+    while(t < steps){
+        Thermostats_.update(atoms_, dt_);
+        atoms_.velocities_update(dt_);      //速度の更新（1回目）
+        atoms_.positions_update(dt_, box);  //位置の更新
+        NL_.update(atoms_);                 //NLの確認と更新
+        inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
+        atoms_.velocities_update(dt_);      //速度の更新（2回目）
+        Thermostats_.update(atoms_, dt_);
+
+        t ++;
+
+        //出力
+        //とりあえず100ステップごとに出力
+        if(t % 100 == 0){
+            print_energies(t);
+        }
+    }
+}
+
 //-----補助用関数-----
 //エネルギーの出力
 void MD::print_energies(long t){
     RealType K = atoms_.kinetic_energy().item<RealType>();
     RealType U = atoms_.potential_energy().item<RealType>();
+    RealType temperature = atoms_.temperature().item<RealType>();
     
     //時刻、1粒子当たりの運動エネルギー、1粒子当たりのポテンシャルエネルギー、1粒子当たりの全エネルギーを出力
     std::cout << std::setprecision(15) << std::scientific << dt_.item<RealType>() * t << "," 
                                                           << K << "," 
                                                           << U << "," 
-                                                          << K + U << std::endl;
+                                                          << K + U << "," 
+                                                          << temperature << std::endl;
 }

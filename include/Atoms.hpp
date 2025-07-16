@@ -35,6 +35,7 @@ public:
     //物理量の計算
     torch::Tensor kinetic_energy() const;
     torch::Tensor potential_energy() const { return potential_energy_; }
+    torch::Tensor temperature() const;
 
     //その他
     void positions_update(const torch::Tensor dt, torch::Tensor& box);
@@ -58,6 +59,10 @@ private:
     torch::Tensor n_atoms_;
     torch::Tensor potential_energy_;
     torch::Tensor box_size_;
+
+    //定数
+    torch::Tensor conversion_factor_;
+    torch::Tensor boltzmann_constant_;
 };
 
 #endif

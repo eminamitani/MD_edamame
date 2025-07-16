@@ -8,7 +8,8 @@ Atoms::Atoms(std::vector<Atom> atoms, torch::Device device) : device_(device)
     n_atoms_ = torch::tensor(static_cast<int64_t>(N), torch::TensorOptions().device(device).dtype(kIntType));
 
     //使用する定数のデバイスを移動
-    conversion_factor.to(device);
+    conversion_factor_ = torch::tensor(conversion_factor, torch::TensorOptions().dtype(kRealType).device(device_));
+    boltzmann_constant_ = torch::tensor(boltzmann_constant, torch::TensorOptions().dtype(kRealType).device(device_));
 
     //原子数が0の場合の処理
     if (N == 0) {
@@ -99,7 +100,13 @@ torch::Tensor Atoms::kinetic_energy() const {
     auto vel_sq = torch::pow(velocities_, 2);
     auto sum_vel_sq = torch::sum(vel_sq, 1);
     auto kinetic_energies = 0.5 * masses_.squeeze() * sum_vel_sq;
-    return torch::sum(kinetic_energies) / conversion_factor;
+    return torch::sum(kinetic_energies) / conversion_factor_;
+}
+
+torch::Tensor Atoms::temperature() const {
+    auto dof = 3 * n_atoms_ - 3;
+    auto tempareture = 2 * kinetic_energy() / (dof * boltzmann_constant_);
+    return tempareture;
 }
 
 //周期境界条件の補正
@@ -124,5 +131,5 @@ void Atoms::positions_update(const torch::Tensor dt, torch::Tensor& box){
 void Atoms::velocities_update(const torch::Tensor dt){
     //masses_.unsqueeze(1): (N, ) -> (N, 1)
     //単位変換 (eV / Å・u) -> ((Å / (fs^2))
-    velocities_ += 0.5 * dt * (forces_ / masses_.unsqueeze(1)) * conversion_factor;
+    velocities_ += 0.5 * dt * (forces_ / masses_.unsqueeze(1)) * conversion_factor_;
 }

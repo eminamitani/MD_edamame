@@ -13,8 +13,8 @@ int main(){
     const RealType margin = 1.0;
 
     //パス
-    const std::string data_path = "./data/saved_structure.xyz";
-    const std::string model_path = "./models/deployed_model_SiO2.pt";
+    const std::string data_path = "../data/diamond_structure_2.xyz";
+    const std::string model_path = "../models/deployed_model.pt";
 
     //現在時刻を記録
     auto start = std::chrono::steady_clock::now();
@@ -26,7 +26,7 @@ int main(){
     md.init_vel_MB(300.0);
 
     //シミュレーションの開始
-    md.NVE_log(1e+5);
+    md.NVT(1e+5, 4, 300.0);
 
     //終了時刻を記録
     auto end = std::chrono::steady_clock::now();

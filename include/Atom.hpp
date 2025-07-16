@@ -51,6 +51,7 @@ class Atom{
 
         //計算デバイス
         torch::Device device_;
+        torch::Tensor conversion_factor_;
 };
 
 #endif

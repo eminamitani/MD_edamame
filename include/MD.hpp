@@ -4,6 +4,7 @@
 #include "Atoms.hpp"
 #include "NeighbourList.hpp"
 #include "config.h"
+#include "NoseHooverThermostats.hpp"
 
 #include <torch/script.h>
 #include <torch/torch.h>
@@ -23,6 +24,8 @@ class MD{
         void NVE_save(const float tsim);
         void NVE_from_grad(const float tsim);                                     //エネルギーだけモデルで推論し力はその微分で求める
 
+        void NVT(const float tsim, const IntType length, const float targ_tmp);
+
     private:
         //その他（補助用関数）
         void print_energies(long t);                                    //結果の出力
@@ -33,6 +36,7 @@ class MD{
         torch::Tensor Lbox_;                                            //シミュレーションセルのサイズ
         torch::Tensor Linv_;                                            //セルのサイズの逆数
         NeighbourList NL_;                                              //隣接リスト
+        NoseHooverThermostats Thermostats_;                             //Nose-Hoover熱浴
 
         //MLP用変数
         torch::jit::script::Module module_;                              //モデルを格納する変数
@@ -43,6 +47,10 @@ class MD{
 
         //シミュレーションデバイス
         torch::Device device_;
+
+        //定数
+        torch::Tensor boltzmann_constant_;
+        torch::Tensor conversion_factor_;
 };
 
 #endif
