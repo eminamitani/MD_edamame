@@ -9,11 +9,14 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
+#include <optional>
+
 class MD{
     public:
         //コンストラクタ
         MD(torch::Tensor dt, torch::Tensor cutoff, torch::Tensor margin, std::string data_path, std::string model_path, torch::Device device = torch::kCPU); 
         MD(RealType dt, RealType cutoff, RealType margin, std::string data_path, std::string model_path, torch::Device device = torch::kCPU); 
+        MD(RealType dt, RealType cutoff, RealType margin, Atoms atoms, torch::Device device = torch::kCPU); 
 
         //初期化
         void init_vel_MB(const RealType float_targ);                       //原子の速度の初期化
@@ -25,6 +28,7 @@ class MD{
         void NVE_from_grad(const RealType tsim);                                     //エネルギーだけモデルで推論し力はその微分で求める
 
         void NVT(const RealType tsim, const IntType length, const RealType tau, const RealType targ_tmp);
+        void NVT_LJ(const RealType tsim, const IntType length, const RealType tau, const RealType targ_tmp);
 
     private:
         //その他（補助用関数）
@@ -36,7 +40,8 @@ class MD{
         torch::Tensor Lbox_;                                            //シミュレーションセルのサイズ
         torch::Tensor Linv_;                                            //セルのサイズの逆数
         NeighbourList NL_;                                              //隣接リスト
-        NoseHooverThermostats Thermostats_;                             //Nose-Hoover熱浴
+
+        std::optional<NoseHooverThermostats> Thermostats_;              //Nose-Hoover熱浴
 
         //MLP用変数
         torch::jit::script::Module module_;                              //モデルを格納する変数

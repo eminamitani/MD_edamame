@@ -9,6 +9,7 @@ class Atoms {
 public:
     // コンストラクタ
     Atoms(torch::Device device);
+    Atoms(int N, torch::Device device);
     Atoms(std::vector<Atom> atoms, torch::Device device);
 
     // デバイス移動
@@ -29,8 +30,11 @@ public:
     void set_positions(const torch::Tensor& positions);
     void set_velocities(const torch::Tensor& velocities);
     void set_forces(const torch::Tensor& forces);
+    void set_masses(const torch::Tensor& masses);
     void set_box_size(const torch::Tensor& box_size);
     void set_potential_energy(const torch::Tensor& potential_energy);
+    void set_atomic_numbers(const torch::Tensor& atomic_numbers);
+    void set_types(const std::vector<std::string>& types);
 
     //物理量の計算
     torch::Tensor kinetic_energy() const;

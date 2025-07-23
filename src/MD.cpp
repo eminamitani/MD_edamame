@@ -3,6 +3,7 @@
 #include "xyz.hpp"
 #include "inference.hpp"
 #include "config.h"
+#include "LJ.hpp"
 
 //コンストラクタ
 MD::MD(torch::Tensor dt, torch::Tensor cutoff, torch::Tensor margin, std::string data_path, std::string model_path, torch::Device device)
@@ -32,6 +33,16 @@ MD::MD(RealType dt, RealType cutoff, RealType margin, std::string data_path, std
         torch::tensor(margin, torch::TensorOptions().device(device).dtype(kRealType)), 
         data_path, model_path, device) {}
 
+MD::MD(RealType dt, RealType cutoff, RealType margin, Atoms atoms, torch::Device device) : device_(device), atoms_(atoms), NL_(torch::tensor(cutoff, torch::TensorOptions().device(device).dtype(kRealType)), torch::tensor(margin, torch::TensorOptions().device(device).dtype(kRealType)), device) {
+    num_atoms_ = atoms_.size();
+    Lbox_ = atoms_.box_size();
+    Linv_ = 1.0 / Lbox_;
+
+    atoms_.apply_pbc();
+
+    boltzmann_constant_ = torch::tensor(boltzmann_constant, torch::TensorOptions().dtype(kRealType).device(device_));
+    conversion_factor_ = torch::tensor(conversion_factor, torch::TensorOptions().dtype(kRealType).device(device_));
+}
 
 //速度の初期化
 void MD::init_vel_MB(const RealType float_targ){
@@ -214,11 +225,11 @@ void MD::NVT(const RealType tsim, const IntType length, const RealType tau, cons
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     //熱浴の初期化
-    torch::Tensor dof_ = 3 * atoms_.size() - 3;
+    torch::Tensor dof_ = 3 * atoms_.size();
     torch::Tensor tau_ = torch::tensor(tau, options.dtype(kRealType));
-    torch::Tensor length_ = torch::tensor(length, options.dtype(kIntType));
     torch::Tensor targ_tmp_ = torch::tensor(targ_tmp, options.dtype(kRealType));
-    Thermostats_ = NoseHooverThermostats(length_, targ_tmp_, dof_, tau_, device_);
+    Thermostats_.emplace(length, targ_tmp_, tau_, device_);
+    Thermostats_->setup(dof_);
 
     //ログの見出しを出力しておく
     std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
@@ -233,17 +244,18 @@ void MD::NVT(const RealType tsim, const IntType length, const RealType tau, cons
     torch::Tensor box = torch::zeros({num_atoms_.item<IntType>(), 3}, options.dtype(kIntType));
 
     long t = 0; //現在のステップ数
-    const long steps = tsim / dt_.item<RealType>();    //総ステップ数
+    RealType dt_real = dt_.item<RealType>();
+    const long steps = tsim / dt_real;    //総ステップ数
     print_energies(t);
 
     while(t < steps){
-        Thermostats_.update(atoms_, dt_);
+        Thermostats_->update(atoms_, dt_);
         atoms_.velocities_update(dt_);      //速度の更新（1回目）
         atoms_.positions_update(dt_, box);  //位置の更新
         NL_.update(atoms_);                 //NLの確認と更新
         inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
         atoms_.velocities_update(dt_);      //速度の更新（2回目）
-        Thermostats_.update(atoms_, dt_);
+        Thermostats_->update(atoms_, dt_);
 
         t ++;
 

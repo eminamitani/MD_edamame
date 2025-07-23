@@ -14,11 +14,11 @@ Atoms::Atoms(std::vector<Atom> atoms, torch::Device device) : device_(device)
     //原子数が0の場合の処理
     if (N == 0) {
         auto tensor_options = torch::TensorOptions().device(device).dtype(kRealType);
-        positions_ = torch::empty({0, 3}, tensor_options);
-        velocities_ = torch::empty({0, 3}, tensor_options);
-        forces_ = torch::empty({0, 3}, tensor_options);
-        masses_ = torch::empty({0}, tensor_options);
-        atomic_numbers_ = torch::empty({0}, torch::TensorOptions().device(device).dtype(kIntType));
+        positions_ = torch::zeros({0, 3}, tensor_options);
+        velocities_ = torch::zeros({0, 3}, tensor_options);
+        forces_ = torch::zeros({0, 3}, tensor_options);
+        masses_ = torch::zeros({0}, tensor_options);
+        atomic_numbers_ = torch::zeros({0}, torch::TensorOptions().device(device).dtype(kIntType));
         types_ = std::vector<std::string>();
         return;
     }
@@ -55,7 +55,18 @@ Atoms::Atoms(std::vector<Atom> atoms, torch::Device device) : device_(device)
     types_ = types;
 }
 
-Atoms::Atoms(torch::Device device) : Atoms(std::vector<Atom>(), device)
+Atoms::Atoms(int N, torch::Device device) : n_atoms_(torch::tensor(N, kIntType)), device_(device)
+{
+    auto tensor_options = torch::TensorOptions().device(device).dtype(kRealType);
+    positions_ = torch::zeros({N, 3}, tensor_options);
+    velocities_ = torch::zeros({N, 3}, tensor_options);
+    forces_ = torch::zeros({N, 3}, tensor_options);
+    masses_ = torch::zeros({N}, tensor_options);
+    atomic_numbers_ = torch::zeros({N}, torch::TensorOptions().device(device).dtype(kIntType));
+    types_ = std::vector<std::string>(N);
+}
+
+Atoms::Atoms(torch::Device device) : Atoms(0, device)
 {
 }
 
@@ -73,6 +84,10 @@ void Atoms::set_forces(const torch::Tensor& forces) {
     TORCH_CHECK(forces.size(0) == n_atoms_.item<int64_t>() && forces.size(1) == 3, "forcesの形状は(N, 3)である必要があります。");
     forces_ = forces;
 }
+void Atoms::set_masses(const torch::Tensor& masses){
+    TORCH_CHECK(masses.size(0) == n_atoms_.item<int64_t>(), "原子番号の形状は(N, )である必要があります。");
+    masses_ = masses;
+}
 void Atoms::set_box_size(const torch::Tensor& box_size){
     TORCH_CHECK(box_size.item<float>() >= 0, "box_sizeは正の数である必要があります。");
     box_size_ = box_size; 
@@ -80,6 +95,18 @@ void Atoms::set_box_size(const torch::Tensor& box_size){
 void Atoms::set_potential_energy(const torch::Tensor& potential_energy){
     TORCH_CHECK(potential_energy.dim() == 0, "potential_energyの次元は0である必要があります。");
     potential_energy_ = potential_energy;
+}
+void Atoms::set_atomic_numbers(const torch::Tensor& atomic_numbers){
+    TORCH_CHECK(atomic_numbers.size(0) == n_atoms_.item<int64_t>(), "原子番号の形状は(N, )である必要があります。");
+    atomic_numbers_ = atomic_numbers;
+}
+void Atoms::set_types(const std::vector<std::string>& types){
+    torch::TensorOptions options = torch::TensorOptions().device(device_);
+    types_ = types;
+    for(std::size_t i = 0; i < types_.size(); i ++) {
+        masses_[i] = torch::tensor(atom_mass_map[types[i]], options.dtype(kRealType));
+        atomic_numbers_[i] = torch::tensor(atom_number_map[types[i]], options.dtype(kIntType));
+    }
 }
 
 //デバイスの移動
@@ -104,7 +131,7 @@ torch::Tensor Atoms::kinetic_energy() const {
 }
 
 torch::Tensor Atoms::temperature() const {
-    auto dof = 3 * n_atoms_ - 3;
+    auto dof = 3 * n_atoms_;
     auto tempareture = 2 * kinetic_energy() / (dof * boltzmann_constant_);
     return tempareture;
 }

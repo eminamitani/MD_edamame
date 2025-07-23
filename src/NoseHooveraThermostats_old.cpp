@@ -1,4 +1,4 @@
-#include "NoseHooverThermostats.hpp"
+#include "NoseHooverThermostats_old.hpp"
 #include "Atoms.hpp"
 #include "config.h"
 #include "inference.hpp"
