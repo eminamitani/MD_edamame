@@ -1,9 +1,9 @@
-#include "NoseHooverThermostats.hpp"
+#include "NoseHooverThermostat.hpp"
 #include "config.h"
 
 #include <stdexcept>
 
-NoseHooverThermostats::NoseHooverThermostats(const IntType length, const torch::Tensor target_tmp, const torch::Tensor tau, torch::Device device) : 
+NoseHooverThermostat::NoseHooverThermostat(const IntType length, const torch::Tensor target_tmp, const torch::Tensor tau, torch::Device device) : 
 length_(length), target_tmp_(target_tmp.to(device)), tau_(tau.to(device)), device_(device)
 {
     torch::TensorOptions option = torch::TensorOptions().dtype(kRealType).device(device_);
@@ -36,9 +36,11 @@ length_(length), target_tmp_(target_tmp.to(device)), tau_(tau.to(device)), devic
     boltzmann_constant_ = torch::tensor(boltzmann_constant, option);
 }
 
-NoseHooverThermostats::NoseHooverThermostats() : NoseHooverThermostats(1.0, torch::tensor(300.0), torch::tensor(1.0), torch::kCPU) {}
+NoseHooverThermostat::NoseHooverThermostat(const IntType length, const RealType target_tmp, const RealType tau, torch::Device device) : NoseHooverThermostat(length, torch::tensor(target_tmp, device), torch::tensor(tau, device), device) {}
 
-void NoseHooverThermostats::setup(Atoms& atoms) {
+NoseHooverThermostat::NoseHooverThermostat() : NoseHooverThermostat(1.0, torch::tensor(300.0), torch::tensor(1.0), torch::kCPU) {}
+
+void NoseHooverThermostat::setup(Atoms& atoms) {
     //質量の初期化
     dof_ = torch::tensor(3 * atoms.size().item<IntType>() - 3);
     torch::Tensor tau2 = torch::pow(tau_, 2);
@@ -46,26 +48,26 @@ void NoseHooverThermostats::setup(Atoms& atoms) {
     masses_[0] *= dof_;
 }
 
-void NoseHooverThermostats::setup(const torch::Tensor dof) {
+void NoseHooverThermostat::setup(const torch::Tensor dof) {
     dof_ = dof;
     torch::Tensor tau2 = torch::pow(tau_, 2);
     masses_.fill_(boltzmann_constant_ * target_tmp_ * tau2);
     masses_[0] *= dof_;
 }
 
-void NoseHooverThermostats::update(Atoms& atoms, const torch::Tensor& dt) {
+void NoseHooverThermostat::update(Atoms& atoms, const torch::Tensor& dt) {
     torch::Tensor kinetic_energy = atoms.kinetic_energy().detach().clone();
     torch::Tensor atoms_velocities = atoms.velocities().detach().clone();
     update(atoms_velocities, kinetic_energy, dt);
     atoms.set_velocities(atoms_velocities);
 }
 
-void NoseHooverThermostats::update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
+void NoseHooverThermostat::update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
     update_function(atoms_velocities, kinetic_energy, dt);
 }
 
 //1段
-void NoseHooverThermostats::NHC1(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
+void NoseHooverThermostat::NHC1(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
     torch::Tensor AKIN = 2 * kinetic_energy;
     torch::Tensor scale = torch::tensor(1.0, torch::TensorOptions().dtype(kRealType).device(device_));
     //逆順の更新
@@ -84,7 +86,7 @@ void NoseHooverThermostats::NHC1(torch::Tensor& atoms_velocities, const torch::T
 }
 
 //2段
-void NoseHooverThermostats::NHC2(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
+void NoseHooverThermostat::NHC2(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
     torch::Tensor AKIN = 2 * kinetic_energy;
     torch::Tensor scale = torch::tensor(1.0, torch::TensorOptions().dtype(kRealType).device(device_));
     //逆順の更新
@@ -111,7 +113,7 @@ void NoseHooverThermostats::NHC2(torch::Tensor& atoms_velocities, const torch::T
 }
 
 //M段（一応。テストあまりしていないです。）
-void NoseHooverThermostats::NHCM(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
+void NoseHooverThermostat::NHCM(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
     torch::Tensor scale = torch::tensor(1.0, torch::TensorOptions().dtype(kRealType).device(device_));
     torch::Tensor Akin = 2 * kinetic_energy;
 

@@ -1,5 +1,5 @@
-#ifndef NOSE_HOOVER_THERMOSTATS_HPP
-#define NOSE_HOOVER_THERMOSTATS_HPP
+#ifndef NOSE_HOOVER_THERMOSTAT_HPP
+#define NOSE_HOOVER_THERMOSTAT_HPP
 
 #include <functional>
 #include <vector>
@@ -9,12 +9,14 @@
 
 #include "Atoms.hpp"
 #include "config.h"
+#include "Thermostat.hpp"
 
-class NoseHooverThermostats {
+class NoseHooverThermostat : public Thermostat {
     public:
         //コンストラクタ
-        NoseHooverThermostats(const IntType length, const torch::Tensor target_tmp, const torch::Tensor tau, torch::Device device = torch::kCPU);
-        NoseHooverThermostats();
+        NoseHooverThermostat(const IntType length, const torch::Tensor target_tmp, const torch::Tensor tau, torch::Device device = torch::kCPU);
+        NoseHooverThermostat(const IntType length, const RealType target_tmp, const RealType tau, torch::Device device = torch::kCPU);
+        NoseHooverThermostat();
 
         //ゲッター
         const IntType length() const { return length_; }
@@ -25,15 +27,15 @@ class NoseHooverThermostats {
         const torch::Tensor& target_tmp() const { return target_tmp_; }
 
         //初期化
-        void setup(Atoms& atoms);
+        void setup(Atoms& atoms) override;
         void setup(torch::Tensor dof);
 
         //更新
-        void update(Atoms& atoms, const torch::Tensor& dt);
-        void update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt);    //速度のみを使う場合
+        void update(Atoms& atoms, const torch::Tensor& dt) override;
+        void update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) override;    //速度のみを使う場合
 
-        NoseHooverThermostats(const NoseHooverThermostats&) = delete;
-        NoseHooverThermostats& operator=(const NoseHooverThermostats&) = delete;
+        NoseHooverThermostat(const NoseHooverThermostat&) = delete;
+        NoseHooverThermostat& operator=(const NoseHooverThermostat&) = delete;
         
     private:
         //更新用

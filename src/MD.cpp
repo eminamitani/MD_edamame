@@ -221,15 +221,10 @@ void MD::NVE_save(const RealType tsim){
     xyz::save_atoms(save_path, atoms_);
 }
 
-void MD::NVT(const RealType tsim, const IntType length, const RealType tau, const RealType targ_tmp) {
+void MD::NVT(const RealType tsim, Thermostat& Thermostat) {
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
-    //熱浴の初期化
-    torch::Tensor dof_ = 3 * atoms_.size();
-    torch::Tensor tau_ = torch::tensor(tau, options.dtype(kRealType));
-    torch::Tensor targ_tmp_ = torch::tensor(targ_tmp, options.dtype(kRealType));
-    Thermostats_.emplace(length, targ_tmp_, tau_, device_);
-    Thermostats_->setup(dof_);
+    Thermostat.setup(atoms_);
 
     //ログの見出しを出力しておく
     std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
@@ -249,13 +244,13 @@ void MD::NVT(const RealType tsim, const IntType length, const RealType tau, cons
     print_energies(t);
 
     while(t < steps){
-        Thermostats_->update(atoms_, dt_);
+        Thermostat.update(atoms_, dt_);
         atoms_.velocities_update(dt_);      //速度の更新（1回目）
         atoms_.positions_update(dt_, box);  //位置の更新
         NL_.update(atoms_);                 //NLの確認と更新
         inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
         atoms_.velocities_update(dt_);      //速度の更新（2回目）
-        Thermostats_->update(atoms_, dt_);
+        Thermostat.update(atoms_, dt_);
 
         t ++;
 

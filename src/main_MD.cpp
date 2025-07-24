@@ -1,4 +1,5 @@
 #include "MD.hpp"
+#include "NoseHooverThermostat.hpp"
 #include "config.h"
 #include <chrono>
 #include <thread>
@@ -23,6 +24,9 @@ int main(){
     //現在時刻を記録
     auto start = std::chrono::steady_clock::now();
 
+    //熱浴の初期化
+    NoseHooverThermostat nose_hoover_thermostat(chain_length, temperature, tau, device);
+
     //MDオブジェクトの実体化
     MD md = MD(dt, cutoff, margin, data_path, model_path, device);
 
@@ -30,7 +34,7 @@ int main(){
     md.init_vel_MB(300.0);
 
     //シミュレーションの開始
-    md.NVT(1e+5, chain_length, tau, temperature);
+    md.NVT(1e+5, nose_hoover_thermostat);
 
     //終了時刻を記録
     auto end = std::chrono::steady_clock::now();
