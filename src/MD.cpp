@@ -311,7 +311,7 @@ void MD::print_energies(long t){
     RealType U = atoms_.potential_energy().item<RealType>();
     RealType temperature = atoms_.temperature().item<RealType>();
     
-    //時刻、1粒子当たりの運動エネルギー、1粒子当たりのポテンシャルエネルギー、1粒子当たりの全エネルギーを出力
+    //時刻、運動エネルギー、ポテンシャルエネルギー、全エネルギー、温度を出力
     std::cout << std::setprecision(15) << std::scientific << dt_.item<RealType>() * t << "," 
                                                           << K << "," 
                                                           << U << "," 
