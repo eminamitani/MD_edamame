@@ -4,7 +4,8 @@
 #include "Atoms.hpp"
 #include "NeighbourList.hpp"
 #include "config.h"
-#include "Thermostat.hpp"
+#include "NoseHooverThermostat.hpp"
+#include "BussiThermostat.hpp"
 
 #include <torch/script.h>
 #include <torch/torch.h>
@@ -27,7 +28,8 @@ class MD{
         void NVE_save(const RealType tsim);
         void NVE_from_grad(const RealType tsim);                                    //エネルギーだけモデルで推論し力はその微分で求める
 
-        void NVT(const RealType tsim, Thermostat& Thermostat);           //NVTシミュレーション
+        void NVT(const RealType tsim, NoseHooverThermostat& Thermostat);            //NoseHoover熱浴を用いたNVTシミュレーション
+        void NVT(const RealType tsim, BussiThermostat& Thermostat);                 //Bussi熱浴を用いたNVTシミュレーション
 
     private:
         //その他（補助用関数）

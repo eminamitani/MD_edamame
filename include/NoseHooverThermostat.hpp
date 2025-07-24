@@ -9,9 +9,8 @@
 
 #include "Atoms.hpp"
 #include "config.h"
-#include "Thermostat.hpp"
 
-class NoseHooverThermostat : public Thermostat {
+class NoseHooverThermostat {
     public:
         //コンストラクタ
         NoseHooverThermostat(const IntType length, const torch::Tensor target_tmp, const torch::Tensor tau, torch::Device device = torch::kCPU);
@@ -27,12 +26,12 @@ class NoseHooverThermostat : public Thermostat {
         const torch::Tensor& target_tmp() const { return target_tmp_; }
 
         //初期化
-        void setup(Atoms& atoms) override;
+        void setup(Atoms& atoms);
         void setup(torch::Tensor dof);
 
         //更新
-        void update(Atoms& atoms, const torch::Tensor& dt) override;
-        void update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) override;    //速度のみを使う場合
+        void update(Atoms& atoms, const torch::Tensor& dt);
+        void update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt);    //速度のみを使う場合
 
         NoseHooverThermostat(const NoseHooverThermostat&) = delete;
         NoseHooverThermostat& operator=(const NoseHooverThermostat&) = delete;
@@ -50,8 +49,8 @@ class NoseHooverThermostat : public Thermostat {
         torch::Tensor masses_;          //質量 (M, )
         torch::Tensor velocities_;      //速度 (M, )
         torch::Tensor forces_;          //力 (M, )
-        torch::Tensor tau_;
-        torch::Tensor dof_;
+        torch::Tensor tau_;             //緩和時間 (1, )
+        torch::Tensor dof_;             //系の自由度 (1, )
 
         torch::Tensor target_tmp_;      //目標温度 (1, )
 

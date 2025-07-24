@@ -1,5 +1,5 @@
-#ifndef LOAD_FILE
-#define LOAD_FILE
+#ifndef XYZ_HPP
+#define XYZ_HPP
 
 #include "Atoms.hpp"
 #include <vector>
@@ -14,6 +14,7 @@ namespace xyz{
 
     //構造の保存
     void save_atoms(std::string data_path, Atoms atoms);
+    void save_unwrapped_atoms(std::string data_path, Atoms atoms);  //boxを考慮して保存（まだ作ってない）
 }
 
 #endif
