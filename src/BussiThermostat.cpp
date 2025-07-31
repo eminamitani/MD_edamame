@@ -4,15 +4,13 @@
 #include <random>
 
 //コンストラクタ
-BussiThermostat::BussiThermostat(const torch::Tensor targ_temp, const torch::Tensor tau, torch::Device device) : targ_temp_(targ_temp), tau_(tau), device_(device), mt_(std::random_device()())
-{
-    torch::TensorOptions option = torch::TensorOptions().device(device);
-    dof_ = torch::empty({}, option.dtype(kIntType));
-    boltzmann_constant_ = torch::tensor(boltzmann_constant, option.dtype(kRealType));
+BussiThermostat::BussiThermostat(const torch::Tensor& targ_temp, const torch::Tensor& tau, torch::Device& device) : targ_temp_(targ_temp), tau_(tau), device_(device), boltzmann_constant_(torch::tensor(boltzmann_constant, kRealType)) {
+    targ_temp_ = targ_temp_.to(device);
+    tau_ = tau_.to(device);
+    boltzmann_constant_ = boltzmann_constant_.to(device);
 }
 
-BussiThermostat::BussiThermostat(const RealType targ_temp, const RealType tau, torch::Device device) : BussiThermostat(torch::tensor(targ_temp, device), torch::tensor(tau, device), device) {}
-
+BussiThermostat::BussiThermostat(const RealType& targ_temp, const RealType& tau, torch::Device& device) : BussiThermostat(torch::tensor(targ_temp), torch::tensor(tau), device) {}
 
 //セットアップ
 void BussiThermostat::setup(const Atoms& atoms) {
@@ -21,15 +19,7 @@ void BussiThermostat::setup(const Atoms& atoms) {
 
 void BussiThermostat::setup(const torch::Tensor& dof) {
     dof_ = dof;
-    IntType dof_int = dof_.item<IntType>();
-    if(dof_int % 2 == 0) {
-        RealType alpha = (dof_int - 1) / 2;
-        dist_ = std::gamma_distribution<>(alpha, 1);
-    }
-    else {
-        RealType alpha = (dof_int - 2) / 2;
-        dist_ = std::gamma_distribution<>(alpha, 1);
-    }
+    dof_ = dof_.to(device_);
 }
 
 //更新
@@ -41,17 +31,17 @@ void BussiThermostat::update(Atoms& atoms, const torch::Tensor& dt) {
 }
 
 void BussiThermostat::update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt) {
-    //乱数の作成
-    torch::Tensor rand = torch::randn({2});
-    torch::Tensor rand2 = torch::pow(rand, 2);
-    torch::Tensor gamma = torch::tensor(dist_(mt_), torch::TensorOptions().device(device_).dtype(kRealType));
+    //乱数の生成
+    torch::Tensor rand = torch::randn({dof_.item<IntType>()}, torch::TensorOptions().dtype(kRealType).device(device_)); //標準正規分布に従うdof個の独立な乱数
+    torch::Tensor r = rand[0];
+    torch::Tensor rand2 = torch::sum(torch::pow(rand, 2));
 
     //目標運動エネルギー
     torch::Tensor targ_kin = (dof_ * boltzmann_constant_ * targ_temp_) / 2;
 
-    //スケーリング要素の計算
+    //スケーリング要素を計算
     torch::Tensor f = torch::exp(- dt / tau_);
-    torch::Tensor alpha2 = f + (targ_kin * (1 - f) * (rand2[0] + rand2[1] + 2 * gamma)) / (dof_ * kinetic_energy) + 2 * rand[0] * torch::sqrt((f * (1 - f) * targ_kin) / (dof_ * kinetic_energy));
+    torch::Tensor alpha2 = f + (targ_kin * (1 - f) * rand2) / (dof_ * kinetic_energy) + 2 * r * torch::sqrt((targ_kin * f * (1 - f)) / (dof_ * kinetic_energy));
 
     //スケーリング
     atoms_velocities *= torch::sqrt(alpha2);

@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # libtorchの場所
-set(LIBTORCH_PATH "/home/nozawa/mambaforge/envs/md/lib/python3.13/site-packages/torch")
+set(LIBTORCH_PATH "/Users/nozawarikuta/kenkyushitsu/venv/lib/python3.13/site-packages/torch")
 set(Torch_DIR "${LIBTORCH_PATH}/share/cmake/Torch")
 
 # libtorchのCMakeモジュールを探す
@@ -17,13 +17,16 @@ find_package(Torch REQUIRED PATHS ${Torch_DIR})
 
 # ソースファイルのリスト
 set(SOURCES
-    src/main_MD.cpp
-    src/MD.cpp
-    src/Atom.cpp
+    src/main_MD_Bussi.cpp
+    src/NoseHooverThermostat.cpp
+    src/BussiThermostat.cpp
     src/Atoms.cpp
-    src/inference.cpp
-    src/xyz.cpp
+    src/Atom.cpp
+    src/MD.cpp
     src/NeighbourList.cpp
+    src/xyz.cpp
+    src/inference.cpp
+    src/LJ.cpp
 )
 
 # 実行ファイルを作成

@@ -65,11 +65,10 @@ constexpr torch::ScalarType kIntType = torch::kInt64;
 
 //定数
 //ボルツマン定数 (eV / K)
-constexpr RealType boltzmann_constant = 1;
-//constexpr RealType boltzmann_constant = 8.617333262145e-5;
+constexpr RealType boltzmann_constant = 8.617333262145e-5;
+
 //変換係数 (ev / u) -> ((Å / fs) ^ 2)
-constexpr RealType conversion_factor = 1;
-//constexpr RealType conversion_factor = 0.964855e-2;
+constexpr RealType conversion_factor = 0.964855e-2;
 
 #endif
 

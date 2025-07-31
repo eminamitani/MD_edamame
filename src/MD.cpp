@@ -245,13 +245,13 @@ void MD::NVT(const RealType tsim, NoseHooverThermostat& Thermostat) {
     print_energies(t);
 
     while(t < steps){
-        Thermostat.update(atoms_, dt_);
+        Thermostat.update(atoms_, dt_);     //熱浴の更新
         atoms_.velocities_update(dt_);      //速度の更新（1回目）
         atoms_.positions_update(dt_, box);  //位置の更新
         NL_.update(atoms_);                 //NLの確認と更新
         inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
         atoms_.velocities_update(dt_);      //速度の更新（2回目）
-        Thermostat.update(atoms_, dt_);
+        Thermostat.update(atoms_, dt_);     //熱浴の更新
 
         t ++;
 
@@ -292,7 +292,7 @@ void MD::NVT(const RealType tsim, BussiThermostat& Thermostat) {
         NL_.update(atoms_);                 //NLの確認と更新
         inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
         atoms_.velocities_update(dt_);      //速度の更新（2回目）
-        Thermostat.update(atoms_, dt_);
+        Thermostat.update(atoms_, dt_);     //熱浴の更新と速度のスケーリング
 
         t ++;
 
