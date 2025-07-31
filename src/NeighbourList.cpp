@@ -13,6 +13,9 @@ NeighbourList::NeighbourList(torch::Tensor cutoff, torch::Tensor margin, torch::
     if(margin_.item<float>() <= 0){
         throw std::invalid_argument("margin距離は正の数である必要があります。");
     }
+
+    cutoff_ = cutoff_.to(device);
+    margin_ = margin_.to(device);
 }
 
 //デバイスの移動

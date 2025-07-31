@@ -47,11 +47,11 @@ Atoms::Atoms(std::vector<Atom> atoms, torch::Device device) : device_(device)
         types.push_back(atoms[i].type());
     }
     //torch::Tensorに変換
-    positions_ = torch::stack(positions); 
-    velocities_ = torch::stack(velocities); 
-    forces_ = torch::stack(forces); 
-    masses_ = torch::stack(masses);
-    atomic_numbers_ = torch::stack(atomic_numbers);
+    positions_ = torch::stack(positions).to(device); 
+    velocities_ = torch::stack(velocities).to(device); 
+    forces_ = torch::stack(forces).to(device); 
+    masses_ = torch::stack(masses).to(device);
+    atomic_numbers_ = torch::stack(atomic_numbers).to(device);
     types_ = types;
 }
 

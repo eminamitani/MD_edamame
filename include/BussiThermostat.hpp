@@ -11,8 +11,8 @@
 
 class BussiThermostat {
     public:
-        BussiThermostat(const torch::Tensor& targ_temp, const torch::Tensor& tau, torch::Device& device);
-        BussiThermostat(const RealType& targ_temp, const RealType& tau, torch::Device& device);
+        BussiThermostat(const torch::Tensor& targ_temp, const torch::Tensor& tau, const torch::Device& device = torch::kCPU);
+        BussiThermostat(const RealType& targ_temp, const RealType& tau, const torch::Device& device = torch::kCPU);
 
         void setup(const Atoms& atoms);
         void setup(const torch::Tensor& dof);

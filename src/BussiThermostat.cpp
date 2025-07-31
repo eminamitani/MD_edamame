@@ -4,13 +4,13 @@
 #include <random>
 
 //コンストラクタ
-BussiThermostat::BussiThermostat(const torch::Tensor& targ_temp, const torch::Tensor& tau, torch::Device& device) : targ_temp_(targ_temp), tau_(tau), device_(device), boltzmann_constant_(torch::tensor(boltzmann_constant, kRealType)) {
+BussiThermostat::BussiThermostat(const torch::Tensor& targ_temp, const torch::Tensor& tau, const torch::Device& device) : targ_temp_(targ_temp), tau_(tau), device_(device), boltzmann_constant_(torch::tensor(boltzmann_constant, kRealType)) {
     targ_temp_ = targ_temp_.to(device);
     tau_ = tau_.to(device);
     boltzmann_constant_ = boltzmann_constant_.to(device);
 }
 
-BussiThermostat::BussiThermostat(const RealType& targ_temp, const RealType& tau, torch::Device& device) : BussiThermostat(torch::tensor(targ_temp), torch::tensor(tau), device) {}
+BussiThermostat::BussiThermostat(const RealType& targ_temp, const RealType& tau, const torch::Device& device) : BussiThermostat(torch::tensor(targ_temp), torch::tensor(tau), device) {}
 
 //セットアップ
 void BussiThermostat::setup(const Atoms& atoms) {

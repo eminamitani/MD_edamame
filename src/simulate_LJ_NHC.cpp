@@ -9,7 +9,7 @@
 #include <cmath>
 #include <vector>
 
-#include "NoseHooverThermostats.hpp"
+#include "NoseHooverThermostat.hpp"
 #include <torch/torch.h>
 
 //---------------------------------------------------------------
@@ -43,7 +43,7 @@ double NL_config[N][deg];
 torch::Tensor tau = torch::tensor(dt * 50);
 torch::Tensor targ_tmp = torch::tensor(1.0);
 torch::Tensor dof = torch::tensor(3 * N - 3);
-NoseHooverThermostats thermostats = NoseHooverThermostats(1, targ_tmp, tau);
+NoseHooverThermostat thermostats = NoseHooverThermostat(1, targ_tmp, tau);
 torch::Tensor velo_tensor = torch::from_blob(velo, {N, deg}, torch::kFloat64);  //veloをラップするテンソル
 
 void init_lattice() {
