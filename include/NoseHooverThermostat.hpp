@@ -25,6 +25,10 @@ class NoseHooverThermostat {
         const torch::Tensor& dof() const { return dof_; }
         const torch::Tensor& target_tmp() const { return target_tmp_; }
 
+        //セッター
+        void set_target_tmp(const torch::Tensor& temp) { target_tmp_ = temp; }
+        void set_target_tmp(const RealType& temp) { target_tmp_ = torch::tensor(temp, device_); }
+
         //初期化
         void setup(Atoms& atoms);
         void setup(torch::Tensor dof);

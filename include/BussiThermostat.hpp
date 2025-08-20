@@ -14,11 +14,17 @@ class BussiThermostat {
         BussiThermostat(const torch::Tensor& targ_temp, const torch::Tensor& tau, const torch::Device& device = torch::kCPU);
         BussiThermostat(const RealType& targ_temp, const RealType& tau, const torch::Device& device = torch::kCPU);
 
+        const torch::Tensor& temp() const { return targ_temp_; }
+        RealType temp_real() const { return targ_temp_.item<RealType>(); }
+
         void setup(const Atoms& atoms);
         void setup(const torch::Tensor& dof);
 
         void update(Atoms& atoms, const torch::Tensor& dt);
         void update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt);
+
+        void set_temp(const torch::Tensor& targ_temp) { targ_temp_ = targ_temp; }
+        void set_temp(const RealType& targ_temp);
 
     private:
         torch::Tensor dof_;

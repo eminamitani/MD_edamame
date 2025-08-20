@@ -31,10 +31,15 @@ class MD{
         void NVT(const RealType tsim, NoseHooverThermostat& Thermostat);            //NoseHoover熱浴を用いたNVTシミュレーション
         void NVT(const RealType tsim, BussiThermostat& Thermostat);                 //Bussi熱浴を用いたNVTシミュレーション
 
+        void MQ(const RealType t_eq, const RealType cooling_rate, BussiThermostat& Thermostat, const RealType targ_temp);
     private:
         //その他（補助用関数）
-        void print_energies(long t);                                    //結果の出力
+        void print_energies(IntType t);                                 //結果の出力
         void remove_drift();                                            //全体速度の除去
+
+        void step(torch::Tensor& box);                                  //1ステップ
+        void step(torch::Tensor& box, NoseHooverThermostat& Thermostat);
+        void step(torch::Tensor& box, BussiThermostat& Thermostat);
 
         //シミュレーション用
         torch::Tensor dt_;                                              //時間刻み幅

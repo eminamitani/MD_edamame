@@ -46,3 +46,7 @@ void BussiThermostat::update(torch::Tensor& atoms_velocities, const torch::Tenso
     //スケーリング
     atoms_velocities *= torch::sqrt(alpha2);
 }
+
+void BussiThermostat::set_temp(const RealType& targ_temp){
+    targ_temp_ = torch::tensor(targ_temp, device_);
+}

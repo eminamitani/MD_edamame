@@ -86,11 +86,7 @@ void MD::NVE(const RealType tsim) {
     print_energies(t);
 
     while(t < steps){
-        atoms_.velocities_update(dt_);      //速度の更新（1回目）
-        atoms_.positions_update(dt_, box);  //位置の更新
-        NL_.update(atoms_);                 //NLの確認と更新
-        inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
-        atoms_.velocities_update(dt_);      //速度の更新（2回目）
+        step(box);
 
         t ++;
 
@@ -128,11 +124,7 @@ void MD::NVE_log(const RealType tsim) {
     auto checker = 1e-3 * std::pow(logbin, counter);
 
     while(t < steps){
-        atoms_.velocities_update(dt_);      //速度の更新（1回目）
-        atoms_.positions_update(dt_, box);  //位置の更新
-        NL_.update(atoms_);                 //NLの確認と更新
-        inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
-        atoms_.velocities_update(dt_);      //速度の更新（2回目）
+        step(box);
 
         t ++;
 
@@ -165,11 +157,7 @@ void MD::NVE_from_grad(const RealType tsim){
     print_energies(t);
 
     while(t < steps){
-        atoms_.velocities_update(dt_);      //速度の更新（1回目）
-        atoms_.positions_update(dt_, box);  //位置の更新
-        NL_.update(atoms_);                 //NLの確認と更新
-        inference::infer_energy_with_MLP_and_clac_force(module_, atoms_, NL_); //力の更新
-        atoms_.velocities_update(dt_);      //速度の更新（2回目）
+        step(box);
 
         t ++;
 
@@ -202,12 +190,7 @@ void MD::NVE_save(const RealType tsim){
     print_energies(t);
 
     while(t < steps){
-        atoms_.velocities_update(dt_);      //速度の更新（1回目）
-        atoms_.positions_update(dt_, box);  //位置の更新
-        NL_.update(atoms_);                 //NLの確認と更新
-        inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
-        atoms_.velocities_update(dt_);      //速度の更新（2回目）
-
+        step(box);
         t ++;
 
         //出力
@@ -245,20 +228,21 @@ void MD::NVT(const RealType tsim, NoseHooverThermostat& Thermostat) {
     print_energies(t);
 
     while(t < steps){
-        Thermostat.update(atoms_, dt_);     //熱浴の更新
-        atoms_.velocities_update(dt_);      //速度の更新（1回目）
-        atoms_.positions_update(dt_, box);  //位置の更新
-        NL_.update(atoms_);                 //NLの確認と更新
-        inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
-        atoms_.velocities_update(dt_);      //速度の更新（2回目）
-        Thermostat.update(atoms_, dt_);     //熱浴の更新
-
+        step(box, Thermostat);
         t ++;
 
         //出力
         //とりあえず100ステップごとに出力
         if(t % 100 == 0){
             print_energies(t);
+        }
+
+        //ドリフト速度の除去
+        if(!(t & 127)) { 
+            torch::Tensor velocities = atoms_.velocities();
+            torch::Tensor drift_velocity = torch::mean(velocities, 0);
+            velocities -= drift_velocity;
+            atoms_.set_velocities(velocities);
         }
     }
 }
@@ -287,13 +271,7 @@ void MD::NVT(const RealType tsim, BussiThermostat& Thermostat) {
     print_energies(t);
 
     while(t < steps){
-        atoms_.velocities_update(dt_);      //速度の更新（1回目）
-        atoms_.positions_update(dt_, box);  //位置の更新
-        NL_.update(atoms_);                 //NLの確認と更新
-        inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
-        atoms_.velocities_update(dt_);      //速度の更新（2回目）
-        Thermostat.update(atoms_, dt_);     //熱浴の更新と速度のスケーリング
-
+        step(box, Thermostat);
         t ++;
 
         //出力
@@ -301,12 +279,126 @@ void MD::NVT(const RealType tsim, BussiThermostat& Thermostat) {
         if(t % 100 == 0){
             print_energies(t);
         }
+
+        //ドリフト速度の除去
+        if(!(t & 127)) { 
+            torch::Tensor velocities = atoms_.velocities();
+            torch::Tensor drift_velocity = torch::mean(velocities, 0);
+            velocities -= drift_velocity;
+            atoms_.set_velocities(velocities);
+        }
     }
+}
+
+//melt-quench simulation
+void MD::MQ(const RealType t_eq, const RealType cooling_rate, BussiThermostat& Thermostat, const RealType targ_temp) {
+    torch::TensorOptions options = torch::TensorOptions().device(device_);
+
+    Thermostat.setup(atoms_);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+
+    //周期境界条件のもとで、何個目の箱のミラーに位置しているのかを保存する変数 (N, 3)
+    torch::Tensor box = torch::zeros({num_atoms_.item<IntType>(), 3}, options.dtype(kIntType));
+
+    IntType t = 0; //現在のステップ数
+    RealType T = Thermostat.temp_real(); //現在の温度
+    RealType dt_real = dt_.item<RealType>();    //タイムステップ
+    const IntType eq_steps = static_cast<IntType>(std::ceil(t_eq / dt_real));              //緩和ステップ数
+    const RealType dT = cooling_rate * dt_real;                                             //1ステップあたりの下降温度
+    const IntType quench_steps = static_cast<IntType>(std::ceil((T - targ_temp) / dT));    //冷却ステップ数
+    print_energies(t);
+
+    std::cout << "eq_steps: " << eq_steps << std::endl;
+    std::cout << "quench_steps: " << quench_steps << std::endl;
+
+    //初期温度で緩和
+    while(t < eq_steps){
+        step(box, Thermostat);
+        t ++;
+
+        //出力
+        if (t % 1000 == 0) {
+            print_energies(t);
+        }
+
+        //ドリフト速度の除去
+        if(!(t & 127)) { 
+            torch::Tensor velocities = atoms_.velocities();
+            torch::Tensor drift_velocity = torch::mean(velocities, 0);
+            velocities -= drift_velocity;
+            atoms_.set_velocities(velocities);
+        }
+    }
+
+    std::cout << "緩和完了" << std::endl;
+
+    //構造の保存
+    xyz::save_atoms("./output_eq1.xyz", atoms_);
+
+    //冷却
+    while(t < eq_steps + quench_steps){
+        T -= dT;
+        step(box, Thermostat);
+        t ++;
+
+        //出力
+        if (t % 1000 == 0) {
+            print_energies(t);
+        }
+
+        //ドリフト速度の除去
+        if(!(t & 127)) { 
+            torch::Tensor velocities = atoms_.velocities();
+            torch::Tensor drift_velocity = torch::mean(velocities, 0);
+            velocities -= drift_velocity;
+            atoms_.set_velocities(velocities);
+        }
+    }
+
+    std::cout << "冷却完了" << std::endl;    
+
+    //構造の保存
+    xyz::save_atoms("./output_quench.xyz", atoms_);
+
+    T = targ_temp;
+    Thermostat.set_temp(T);
+
+    //targ_tempで緩和
+    while(t < eq_steps + quench_steps + eq_steps){
+        step(box, Thermostat);
+        t ++;
+
+        //出力
+        if (t % 1000 == 0) {
+            print_energies(t);
+        }
+
+        //ドリフト速度の除去
+        if(!(t & 127)) { 
+            torch::Tensor velocities = atoms_.velocities();
+            torch::Tensor drift_velocity = torch::mean(velocities, 0);
+            velocities -= drift_velocity;
+            atoms_.set_velocities(velocities);
+        }
+    }
+
+    std::cout << "緩和完了" << std::endl;
+
+    //構造の保存
+    xyz::save_atoms("./output_eq2.xyz", atoms_);
 }
 
 //-----補助用関数-----
 //エネルギーの出力
-void MD::print_energies(long t){
+void MD::print_energies(IntType t){
     RealType K = atoms_.kinetic_energy().item<RealType>();
     RealType U = atoms_.potential_energy().item<RealType>();
     RealType temperature = atoms_.temperature().item<RealType>();
@@ -317,4 +409,23 @@ void MD::print_energies(long t){
                                                           << U << "," 
                                                           << K + U << "," 
                                                           << temperature << std::endl;
+}
+
+void MD::step(torch::Tensor& box) {
+    atoms_.velocities_update(dt_);      //速度の更新（1回目）
+    atoms_.positions_update(dt_, box);  //位置の更新
+    NL_.update(atoms_);                 //NLの確認と更新
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
+    atoms_.velocities_update(dt_);      //速度の更新（2回目）
+}
+
+void MD::step(torch::Tensor& box, NoseHooverThermostat& Thermostat) {
+    Thermostat.update(atoms_, dt_);     //熱浴の更新
+    step(box);
+    Thermostat.update(atoms_, dt_);     //熱浴の更新
+}
+
+void MD::step(torch::Tensor& box, BussiThermostat& Thermostat) {
+    step(box);
+    Thermostat.update(atoms_, dt_);     //熱浴の更新
 }

@@ -14,7 +14,7 @@ int main(){
     const RealType margin = 1.0;
 
     const RealType tau = dt * 50;
-    const IntType chain_length = 5;
+    const IntType chain_length = 2;
     const RealType temperature = 300.0;
 
     //パス
