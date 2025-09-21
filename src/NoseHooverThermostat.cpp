@@ -2,11 +2,14 @@
 #include "config.h"
 
 #include <stdexcept>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 NoseHooverThermostat::NoseHooverThermostat(const IntType length, const torch::Tensor target_tmp, const torch::Tensor tau, torch::Device device) : 
 length_(length), target_tmp_(target_tmp.to(device)), tau_(tau.to(device)), device_(device)
 {
-    torch::TensorOptions option = torch::TensorOptions().dtype(kRealType).device(device_);
+    torch::TensorOptions options = torch::TensorOptions().dtype(kRealType).device(device_);
 
     //更新関数の初期化
     if(length_ == 1) {
@@ -27,13 +30,13 @@ length_(length), target_tmp_(target_tmp.to(device)), tau_(tau.to(device)), devic
 
     //変数の初期化
     dof_ = torch::tensor(0, torch::TensorOptions().device(device).dtype(kIntType));
-    positions_ = torch::zeros({length_}, option);
-    velocities_ = torch::zeros({length_}, option);
-    forces_ = torch::zeros({length_}, option);
-    masses_ = torch::zeros({length_}, option);
+    positions_ = torch::zeros({length_}, options);
+    velocities_ = torch::zeros({length_}, options);
+    forces_ = torch::zeros({length_}, options);
+    masses_ = torch::zeros({length_}, options);
 
     //定数
-    boltzmann_constant_ = torch::tensor(boltzmann_constant, option);
+    boltzmann_constant_ = torch::tensor(boltzmann_constant, options);
 }
 
 NoseHooverThermostat::NoseHooverThermostat(const IntType length, const RealType target_tmp, const RealType tau, torch::Device device) : NoseHooverThermostat(length, torch::tensor(target_tmp, device), torch::tensor(tau, device), device) {}
@@ -42,14 +45,14 @@ NoseHooverThermostat::NoseHooverThermostat() : NoseHooverThermostat(1.0, torch::
 
 void NoseHooverThermostat::setup(Atoms& atoms) {
     //質量の初期化
-    dof_ = torch::tensor(3 * atoms.size().item<IntType>() - 3);
+    dof_ = torch::tensor(3 * atoms.size().item<IntType>() - 3, torch::TensorOptions().device(device_).dtype(kIntType));
     torch::Tensor tau2 = torch::pow(tau_, 2);
     masses_.fill_(boltzmann_constant_ * target_tmp_ * tau2);
     masses_[0] *= dof_;
 }
 
 void NoseHooverThermostat::setup(const torch::Tensor dof) {
-    dof_ = dof;
+    dof_ = dof.to(device_);
     torch::Tensor tau2 = torch::pow(tau_, 2);
     masses_.fill_(boltzmann_constant_ * target_tmp_ * tau2);
     masses_[0] *= dof_;

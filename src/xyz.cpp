@@ -39,10 +39,14 @@ namespace {
                 return result;
             }
 
-            else{ throw std::runtime_error("終了のダブルクオーテーションが見つかりません。"); }
+            else{ 
+                throw std::runtime_error("終了のダブルクオーテーションが見つかりません。"); 
+            }
         }
 
-        else{ throw std::runtime_error("ファイルにLatticeデータが含まれていません。"); }
+        else{ 
+            throw std::runtime_error("ファイルにLatticeデータが含まれていません。"); 
+        }
     }
 }
 
@@ -320,7 +324,7 @@ void xyz::load_atoms(std::string data_path, Atoms& atoms, float Lbox, torch::Dev
 }
 
 //構造をxyzファイルに保存
-void xyz::save_atoms(std::string data_path, Atoms atoms){
+void xyz::save_atoms(const std::string& data_path, const Atoms& atoms){
     //ファイルを開く
     std::ofstream output(data_path);
 
@@ -352,6 +356,47 @@ void xyz::save_atoms(std::string data_path, Atoms atoms){
     for(IntType i = 0; i < n_atoms; i ++){
         output << atoms.types()[i] << " "
                << atoms.positions()[i][0].item<RealType>() << " " << atoms.positions()[i][1].item<RealType>() << " " << atoms.positions()[i][2].item<RealType>() << " "
+               << atoms.forces()[i][0].item<RealType>() << " " << atoms.forces()[i][1].item<RealType>() << " " << atoms.forces()[i][2].item<RealType>() << std::endl;
+    }
+
+    //ファイルを閉じる
+    output.close();
+}
+
+void xyz::save_unwrapped_atoms(const std::string& data_path, const Atoms& atoms, const torch::Tensor& box){
+    //ファイルを開く
+    std::ofstream output(data_path, std::ios::app);
+
+    //開けているか確認
+    if(!output.is_open()){
+        throw std::runtime_error("出力ファイルを開けませんでした。");
+    }
+
+    //書き込み
+    //1行目は原子数
+    IntType n_atoms = atoms.size().item<IntType>();
+    RealType box_size = atoms.box_size().item<RealType>();
+    output << n_atoms << std::endl;
+    //2行目はコメント行
+    //Lattice
+    output << "Lattice=\"" << box_size << " " << 0.0 << " " << 0.0 << " " 
+                           << 0.0 << " " << box_size << " " << 0.0 << " " 
+                           << 0.0 << " " << 0.0 << " " << box_size << "\"" << " ";
+    //Properties
+    output << "Properties=species:S:1:pos:R:3:force:R:3" << " ";
+    //energy
+    output << "energy=" << atoms.potential_energy().item<RealType>() << " ";
+    //pbc
+    output << "pbc=\"F F F\"";
+
+    output << std::endl;
+
+    //3行目以降に原子の種類と座標と力
+    for(IntType i = 0; i < n_atoms; i ++){
+        output << atoms.types()[i] << " "
+               << atoms.positions()[i][0].item<RealType>() + box[i][0].item<RealType>() * box_size << " " 
+               << atoms.positions()[i][1].item<RealType>() + box[i][1].item<RealType>() * box_size << " " 
+               << atoms.positions()[i][2].item<RealType>() + box[i][2].item<RealType>() * box_size << " "
                << atoms.forces()[i][0].item<RealType>() << " " << atoms.forces()[i][1].item<RealType>() << " " << atoms.forces()[i][2].item<RealType>() << std::endl;
     }
 

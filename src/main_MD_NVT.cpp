@@ -34,10 +34,10 @@ int main(){
     MD md = MD(dt, cutoff, margin, data_path, model_path, device);
 
     //速度の初期化
-    md.init_vel_MB(T_0);
+    md.set_temp(T_0);
 
     //シミュレーションの実行
-    md.MQ(t_eq, cooling_rate, bussi_thermostat, T_targ);
+    md.MQ_log(t_eq, cooling_rate, bussi_thermostat, T_targ);
 
     //終了時刻を記録
     auto end = std::chrono::steady_clock::now();

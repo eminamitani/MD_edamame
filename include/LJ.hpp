@@ -23,6 +23,8 @@ namespace LJ {
     //力とエネルギーの計算
     void calc_force(Atoms& atoms, NeighbourList NL);
     void calc_potential(Atoms& atoms, NeighbourList NL);
+
+    void calc_energy_and_force(Atoms& atoms, NeighbourList NL);
 }
 
 #endif

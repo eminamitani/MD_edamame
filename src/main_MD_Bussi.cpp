@@ -9,7 +9,7 @@ int main(){
     torch::Device device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU);
 
     //定数
-    const RealType dt = 0.1;
+    const RealType dt = 0.5;
     const RealType cutoff = 5.0;
     const RealType margin = 1.0;
 
@@ -33,12 +33,7 @@ int main(){
     md.init_vel_MB(300.0);
 
     //シミュレーションの開始
-    md.NVT(1e+3, bussi_thermostat);
-
-    std::cout << "緩和完了" << std::endl;
-
-    bussi_thermostat.set_temp(temperature);
-    md.NVT(1e+5, bussi_thermostat);
+    md.NVT(1e+6, bussi_thermostat);
 
     //終了時刻を記録
     auto end = std::chrono::steady_clock::now();

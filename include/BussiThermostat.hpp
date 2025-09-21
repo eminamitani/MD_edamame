@@ -2,6 +2,7 @@
 #define BUSSI_THERMOSTAT_HPP
 
 #include "Atoms.hpp"
+#include "Thermostat.hpp"
 #include "config.h"
 
 #include <functional>

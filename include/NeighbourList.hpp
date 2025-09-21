@@ -5,7 +5,7 @@
 
 #include <vector>
 
-class NeighbourList{
+class NeighbourList {
     public:
         //コンストラクタ
         NeighbourList(torch::Tensor cutoff, torch::Tensor margin, torch::Device device = torch::kCPU);

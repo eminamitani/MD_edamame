@@ -2,6 +2,7 @@
 #define ATOMS_HPP
 
 #include "Atom.hpp"
+#include "config.h"
 #include <torch/torch.h>
 #include <vector>
 
@@ -46,6 +47,11 @@ public:
     void velocities_update(const torch::Tensor dt);
     void apply_pbc(); //周期境界条件の補正
     void apply_pbc(torch::Tensor& box);
+
+    void remove_drift();    //全体速度の除去
+
+    //static関数
+    static Atoms make_LJ_unit(const IntType N, const RealType ratio, const RealType rho, const torch::Device& device);  //LJユニットの作成
     
 private:
     //計算デバイス

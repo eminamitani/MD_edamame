@@ -8,6 +8,7 @@
 #include <torch/torch.h>
 
 #include "Atoms.hpp"
+#include "Thermostat.hpp"
 #include "config.h"
 
 class NoseHooverThermostat {
@@ -23,11 +24,11 @@ class NoseHooverThermostat {
         const torch::Tensor& masses() const { return masses_; }
         const torch::Tensor& velocities() const { return velocities_; }
         const torch::Tensor& dof() const { return dof_; }
-        const torch::Tensor& target_tmp() const { return target_tmp_; }
+        const torch::Tensor& temp() const { return target_tmp_; }
 
         //セッター
-        void set_target_tmp(const torch::Tensor& temp) { target_tmp_ = temp; }
-        void set_target_tmp(const RealType& temp) { target_tmp_ = torch::tensor(temp, device_); }
+        void set_temp(const torch::Tensor& temp) { target_tmp_ = temp; }
+        void set_temp(const RealType& temp) { target_tmp_ = torch::tensor(temp, device_); }
 
         //初期化
         void setup(Atoms& atoms);
@@ -37,7 +38,7 @@ class NoseHooverThermostat {
         void update(Atoms& atoms, const torch::Tensor& dt);
         void update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt);    //速度のみを使う場合
 
-        NoseHooverThermostat(const NoseHooverThermostat&) = delete;
+        NoseHooverThermostat(const NoseHooverThermostat&);
         NoseHooverThermostat& operator=(const NoseHooverThermostat&) = delete;
         
     private:

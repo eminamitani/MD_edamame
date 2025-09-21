@@ -13,8 +13,8 @@ namespace xyz{
     void load_atoms(std::string data_path, Atoms& atoms, float Lbox, torch::Device device = torch::kCPU);                                   //extxyzフォーマットじゃない時
 
     //構造の保存
-    void save_atoms(std::string data_path, Atoms atoms);
-    void save_unwrapped_atoms(std::string data_path, Atoms atoms);  //boxを考慮して保存（まだ作ってない）
+    void save_atoms(const std::string& data_path, const Atoms& atoms);
+    void save_unwrapped_atoms(const std::string& data_path, const Atoms& atoms, const torch::Tensor& box);  //boxを考慮して保存（まだ作ってない）
 }
 
 #endif

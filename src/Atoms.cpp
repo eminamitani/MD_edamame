@@ -1,5 +1,7 @@
 #include "Atoms.hpp"
 #include "config.h"
+#include <algorithm> 
+#include <random>    
 
 //コンストラクタ
 Atoms::Atoms(std::vector<Atom> atoms, torch::Device device) : device_(device)
@@ -53,6 +55,8 @@ Atoms::Atoms(std::vector<Atom> atoms, torch::Device device) : device_(device)
     masses_ = torch::stack(masses).to(device);
     atomic_numbers_ = torch::stack(atomic_numbers).to(device);
     types_ = types;
+
+    potential_energy_ = torch::tensor(0.0, torch::TensorOptions().device(device).dtype(kRealType));
 }
 
 Atoms::Atoms(int N, torch::Device device) : n_atoms_(torch::tensor(N, kIntType)), device_(device)
@@ -64,6 +68,12 @@ Atoms::Atoms(int N, torch::Device device) : n_atoms_(torch::tensor(N, kIntType))
     masses_ = torch::zeros({N}, tensor_options);
     atomic_numbers_ = torch::zeros({N}, torch::TensorOptions().device(device).dtype(kIntType));
     types_ = std::vector<std::string>(N);
+    box_size_ = torch::tensor(0.0, tensor_options);
+
+    conversion_factor_ = torch::tensor(conversion_factor, torch::TensorOptions().dtype(kRealType).device(device_));
+    boltzmann_constant_ = torch::tensor(boltzmann_constant, torch::TensorOptions().dtype(kRealType).device(device_));
+
+    potential_energy_ = torch::tensor(0.0, torch::TensorOptions().device(device).dtype(kRealType));
 }
 
 Atoms::Atoms(torch::Device device) : Atoms(0, device)
@@ -159,4 +169,59 @@ void Atoms::velocities_update(const torch::Tensor dt){
     //masses_.unsqueeze(1): (N, ) -> (N, 1)
     //単位変換 (eV / Å・u) -> ((Å / (fs^2))
     velocities_ += 0.5 * dt * (forces_ / masses_.unsqueeze(1)) * conversion_factor_;
+}
+
+void Atoms::remove_drift() {
+    torch::Tensor drift_velocity = torch::mean(velocities_, 0);
+    velocities_ -= drift_velocity;
+}
+
+Atoms Atoms::make_LJ_unit(const IntType N, const RealType ratio, const RealType rho, const torch::Device& device) {
+    Atoms atoms = Atoms(N, device);
+    torch::TensorOptions options = torch::TensorOptions().device(device).dtype(kRealType);
+    atoms.set_masses(torch::ones({N}, options));
+    RealType Lbox = std::pow(N/rho, 1.0/3.0);
+    atoms.set_box_size(torch::tensor(Lbox, options));
+
+    std::vector<std::string> types;
+    types.reserve(N);
+    const IntType N_A = N * ratio;
+
+    for (int i = 0; i < N; i ++) {
+        if (i < N_A) {
+            types.push_back("A");
+        }
+        else {
+            types.push_back("B");
+        }
+    }
+
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(types.begin(), types.end(), g);
+
+    atoms.set_types(types);
+
+    //位置の初期化
+    torch::Tensor positions = torch::zeros({N, 3}, options);
+    
+    const auto ln = std::ceil(std::pow(N, 1.0 / 3.0));
+    const auto haba = Lbox / ln;
+
+    for (int i = 0; i < N; i ++) {
+        const int iz = std::floor(i / (ln * ln));
+        const int iy = std::floor((i - iz * ln * ln) / ln);
+        const int ix = i - iz * ln * ln - iy * ln;
+
+        positions[i][0] = torch::tensor(haba * 0.5 + haba * ix);
+        positions[i][1] = torch::tensor(haba * 0.5 + haba * iy);
+        positions[i][2] = torch::tensor(haba * 0.5 + haba * iz);
+    }
+
+    positions = positions.to(device);
+
+    atoms.set_positions(positions);
+    atoms.apply_pbc();
+
+    return atoms;
 }

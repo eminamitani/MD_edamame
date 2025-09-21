@@ -13,6 +13,8 @@ torch::Tensor LJ::deriv_1st_LJpotential(const torch::Tensor distances, const tor
 }
 
 void LJ::calc_force(Atoms& atoms, NeighbourList NL) {
+    const auto device = atoms.device();
+
     const torch::Tensor& pos = atoms.positions();
     const torch::Tensor& Lbox = atoms.box_size();
     const torch::Tensor Linv = 1 / Lbox;
@@ -24,29 +26,39 @@ void LJ::calc_force(Atoms& atoms, NeighbourList NL) {
     torch::Tensor diff_pos_vec = source_pos - target_pos;
     diff_pos_vec -= Lbox * torch::floor(diff_pos_vec * Linv + 0.5);
 
-    //実際のカットオフ距離でフィルタリング
-    torch::Tensor cutoff = NL.cutoff();
+    // 距離の2乗を計算
     torch::Tensor dist2 = torch::sum(diff_pos_vec.pow(2), 1);
-    torch::Tensor cutoff2 = cutoff * cutoff;
 
-    torch::Tensor mask = torch::lt(dist2, cutoff2); //dist2 < cutoff2
+    // 種類の判定のために、フィルタリング前の全ペアの原子番号を取得
+    torch::Tensor atomic_numbers = atoms.atomic_numbers();
+    torch::Tensor source_atomic_numbers_all = atomic_numbers.index({NL.source_index()});
+    torch::Tensor target_atomic_numbers_all = atomic_numbers.index({NL.target_index()});
 
+    // ペアごとのカットオフ距離を計算 (同種なら1.5, 異種なら2.0)
+    torch::Tensor same_type_mask = (source_atomic_numbers_all == target_atomic_numbers_all);
+    torch::Tensor cutoffs = torch::where(same_type_mask, 1.5, 2.0).to(device);
+    torch::Tensor cutoff2s = cutoffs.pow(2);
+
+    // ペアごとのカットオフ距離でフィルタリング
+    torch::Tensor mask = torch::lt(dist2, cutoff2s); // dist2 < cutoff^2
+
+    // マスクを適用
     torch::Tensor source_index = NL.source_index().index({mask});
     torch::Tensor target_index = NL.target_index().index({mask});
     dist2 = dist2.index({mask});
     diff_pos_vec = diff_pos_vec.index({mask});
+    cutoffs = cutoffs.index({mask}); // 使用するカットオフ値もフィルタリング
 
-    //種類の判定のために、原子番号を取得
-    torch::Tensor atomic_numbers = atoms.atomic_numbers();
-    torch::Tensor source_atomic_numbers = atomic_numbers.index({source_index});
-    torch::Tensor target_atomic_numbers = atomic_numbers.index({target_index});
+    // フィルタリング後のペアの原子番号
+    torch::Tensor source_atomic_numbers = source_atomic_numbers_all.index({mask});
+    torch::Tensor target_atomic_numbers = target_atomic_numbers_all.index({mask});
 
     //力の計算
     torch::Tensor dist = torch::sqrt(dist2);
-    torch::Tensor sigmas = MBLJ_sij1.index({source_atomic_numbers, target_atomic_numbers});
-    torch::Tensor epsilons = MBLJ_energy.index({source_atomic_numbers, target_atomic_numbers});
+    torch::Tensor sigmas = MBLJ_sij1.to(device).index({source_atomic_numbers, target_atomic_numbers});
+    torch::Tensor epsilons = MBLJ_energy.to(device).index({source_atomic_numbers, target_atomic_numbers});
 
-    torch::Tensor deriv_1st = deriv_1st_LJpotential(dist, sigmas) - deriv_1st_LJpotential(cutoff, sigmas);
+    torch::Tensor deriv_1st = deriv_1st_LJpotential(dist, sigmas) - deriv_1st_LJpotential(cutoffs, sigmas);
     deriv_1st *= epsilons;
 
     torch::Tensor force_scalar = - deriv_1st / dist;
@@ -63,6 +75,7 @@ void LJ::calc_force(Atoms& atoms, NeighbourList NL) {
 }
 
 void LJ::calc_potential(Atoms& atoms, NeighbourList NL) {
+    const auto device = atoms.device();
     const torch::Tensor& pos = atoms.positions();
     const torch::Tensor& Lbox = atoms.box_size();
     const torch::Tensor Linv = 1 / Lbox;
@@ -74,33 +87,48 @@ void LJ::calc_potential(Atoms& atoms, NeighbourList NL) {
     torch::Tensor diff_pos_vec = source_pos - target_pos;
     diff_pos_vec -= Lbox * torch::floor(diff_pos_vec * Linv + 0.5);
 
-    //実際のカットオフ距離でフィルタリング
-    torch::Tensor cutoff = NL.cutoff();
+    // 距離の2乗を計算
     torch::Tensor dist2 = torch::sum(diff_pos_vec.pow(2), 1);
-    torch::Tensor cutoff2 = cutoff * cutoff;
 
-    torch::Tensor mask = torch::lt(dist2, cutoff2); //dist2 < cutoff2
+    // 種類の判定のために、フィルタリング前の全ペアの原子番号を取得
+    torch::Tensor atomic_numbers = atoms.atomic_numbers();
+    torch::Tensor source_atomic_numbers_all = atomic_numbers.index({NL.source_index()});
+    torch::Tensor target_atomic_numbers_all = atomic_numbers.index({NL.target_index()});
 
+    // ペアごとのカットオフ距離を計算 (同種なら1.5, 異種なら2.0)
+    torch::Tensor same_type_mask = (source_atomic_numbers_all == target_atomic_numbers_all);
+    torch::Tensor cutoffs = torch::where(same_type_mask, 1.5, 2.0).to(device);
+    torch::Tensor cutoff2s = cutoffs.pow(2);
+
+    // ペアごとのカットオフ距離でフィルタリング
+    torch::Tensor mask = torch::lt(dist2, cutoff2s); // dist2 < cutoff^2
+
+    // マスクを適用
     torch::Tensor source_index = NL.source_index().index({mask});
     torch::Tensor target_index = NL.target_index().index({mask});
     dist2 = dist2.index({mask});
     diff_pos_vec = diff_pos_vec.index({mask});
+    cutoffs = cutoffs.index({mask}); // 使用するカットオフ値もフィルタリング
 
-    //種類の判定のために、原子番号を取得
-    torch::Tensor atomic_numbers = atoms.atomic_numbers();
-    torch::Tensor source_atomic_numbers = atomic_numbers.index({source_index});
-    torch::Tensor target_atomic_numbers = atomic_numbers.index({target_index});
+    // フィルタリング後のペアの原子番号
+    torch::Tensor source_atomic_numbers = source_atomic_numbers_all.index({mask});
+    torch::Tensor target_atomic_numbers = target_atomic_numbers_all.index({mask});
 
     //ポテンシャルの計算
     torch::Tensor dist = torch::sqrt(dist2);
-    torch::Tensor sigmas = MBLJ_sij1.index({source_atomic_numbers, target_atomic_numbers});
-    torch::Tensor epsilons = MBLJ_energy.index({source_atomic_numbers, target_atomic_numbers});
+    torch::Tensor sigmas = MBLJ_sij1.to(device).index({source_atomic_numbers, target_atomic_numbers});
+    torch::Tensor epsilons = MBLJ_energy.to(device).index({source_atomic_numbers, target_atomic_numbers});
 
-    torch::Tensor potentials = LJpotential(dist, sigmas) - LJpotential(cutoff, sigmas) - deriv_1st_LJpotential(cutoff, sigmas) * (dist - cutoff);
+    torch::Tensor potentials = LJpotential(dist, sigmas) - LJpotential(cutoffs, sigmas) - deriv_1st_LJpotential(cutoffs, sigmas) * (dist - cutoffs);
     potentials *= epsilons;
 
     torch::Tensor potential = torch::sum(potentials);
 
     //ポテンシャルをセット
     atoms.set_potential_energy(potential);
+}
+
+void LJ::calc_energy_and_force(Atoms& atoms, NeighbourList NL) {
+    LJ::calc_force(atoms, NL);
+    LJ::calc_potential(atoms, NL);
 }

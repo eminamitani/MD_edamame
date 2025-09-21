@@ -6,8 +6,8 @@
 
 //原子種類と原子番号を関連づけるmap
 inline std::map<std::string, int> atom_number_map = {
-        {"A", 1}, 
-        {"B", 0}, 
+        {"A", 1},       //LJユニット用
+        {"B", 0},       //LJユニット用
         {"H",  1},
         {"He", 2},
         {"Li", 3},
@@ -32,8 +32,8 @@ inline std::map<std::string, int> atom_number_map = {
 
 //原子種類と原子質量を関連づけるmap
 inline std::map<std::string, double> atom_mass_map = {
-        {"A", 1}, 
-        {"B", 1}, 
+        {"A", 1.0},         //LJユニット用
+        {"B", 1.0},         //LJユニット用
         {"H",   1.0080},
         {"He",  4.0026},
         {"Li",  6.94},
@@ -57,18 +57,22 @@ inline std::map<std::string, double> atom_mass_map = {
     };
 
 //精度の設定
-using RealType = float;
+using RealType = double;
 constexpr torch::ScalarType kRealType = torch::kFloat32;
 
 using IntType = int;
 constexpr torch::ScalarType kIntType = torch::kInt64;
 
+constexpr bool is_LJ_unit = true;
+
 //定数
 //ボルツマン定数 (eV / K)
-constexpr RealType boltzmann_constant = 8.617333262145e-5;
+//constexpr RealType boltzmann_constant = 8.617333262145e-5;
+constexpr RealType boltzmann_constant = is_LJ_unit ? 1.0 : 8.617333262145e-5;
 
 //変換係数 (ev / u) -> ((Å / fs) ^ 2)
-constexpr RealType conversion_factor = 0.964855e-2;
+//constexpr RealType conversion_factor = 0.964855e-2;
+constexpr RealType conversion_factor = is_LJ_unit ? 1.0 : 0.964855e-2;
 
 #endif
 

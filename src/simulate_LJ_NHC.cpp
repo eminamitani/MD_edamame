@@ -10,6 +10,9 @@
 #include <vector>
 
 #include "NoseHooverThermostat.hpp"
+#include "Atom.hpp"
+#include "Atoms.hpp"
+#include "xyz.hpp"
 #include <torch/torch.h>
 
 //---------------------------------------------------------------
@@ -40,8 +43,8 @@ int point[N];
 double NL_config[N][deg];
 //---------------------------------------------------------------
 //熱浴
-torch::Tensor tau = torch::tensor(dt * 50);
-torch::Tensor targ_tmp = torch::tensor(1.0);
+torch::Tensor tau = torch::tensor(1.0);
+torch::Tensor targ_tmp = torch::tensor(2.0);
 torch::Tensor dof = torch::tensor(3 * N - 3);
 NoseHooverThermostat thermostats = NoseHooverThermostat(1, targ_tmp, tau);
 torch::Tensor velo_tensor = torch::from_blob(velo, {N, deg}, torch::kFloat64);  //veloをラップするテンソル
@@ -320,7 +323,7 @@ inline void NL_check() {
     }
 }
 //---------------------------------------------------------------
-void print_energies(const long t) {
+void print_energies(const long t,  int (*box)[deg], bool is_save) {
     // ポテンシャルエネルギーを計算
     const double U = calc_potential();
 
@@ -338,9 +341,43 @@ void print_energies(const long t) {
               << K/N << ","
               << U/N << ","
               << (K + U)/N << std::endl;
+
+    if (is_save) {
+        //構造の保存
+        // ファイル名をステップ数で生成
+        std::string filename = "LJ_NHC_traj.xyz";
+        std::ofstream ofs(filename, std::ios_base::app);
+        if (!ofs) {
+            std::cerr << "Error: Cannot open file " << filename << std::endl;
+            return;
+        }
+
+        // xyz形式のヘッダーを書き込む
+        ofs << N << std::endl;
+        ofs << "Lattice=\"" << Lbox << " 0.0 0.0 0.0 " << Lbox << " 0.0 0.0 0.0 " << Lbox << "\" "
+            << "Properties=species:S:1:pos:R:3 Time=" << dt * t << std::endl;
+
+        // 各原子の情報を書き込む
+        for (int i = 0; i < N; ++i) {
+            // 粒子種を判定 (i < N_A なら 'A', それ以外は 'B')
+            const char species = (i < N_A) ? 'A' : 'B';
+
+            // 周期境界条件を展開した座標を計算
+            double unfolded_x = conf[i][X] + box[i][X] * Lbox;
+            double unfolded_y = conf[i][Y] + box[i][Y] * Lbox;
+            double unfolded_z = conf[i][Z] + box[i][Z] * Lbox;
+
+            // ファイルに書き込む
+            ofs << species << " "
+                << unfolded_x << " "
+                << unfolded_y << " "
+                << unfolded_z << std::endl;
+        }
+        ofs.close();
+    }
 }
 //---------------------------------------------------------------
-void NVE(const double tsim) {
+void NVE(const double tsim, bool is_save) {
     calc_force();
 
     thermostats.setup(dof);
@@ -349,8 +386,12 @@ void NVE(const double tsim) {
     int box[N][deg];
     std::fill(*box, *box + N*deg, 0);
 
+    const auto logbin = std::pow(10.0, 1.0/9);
+    int counter = 5;
+    auto checker = 1e-3 * std::pow(logbin, counter);
+
     long t = 0;
-    print_energies(t);
+    print_energies(t, box, is_save);
 
     const long steps = tsim/dt;
 
@@ -383,13 +424,16 @@ void NVE(const double tsim) {
 
         t++;
 
-        if (t % 100 == 0) {
-            print_energies(t);
+        if (dt*t > checker) {
+            checker *= logbin;
+            print_energies(t, box, is_save);
         }
     }
 }
 //---------------------------------------------------------------
 int main() {
+    double t_eq = 6.68 * 50;
+
     // 疑似乱数生成器を適当に初期化
     std::mt19937 mt(123456789);
 
@@ -402,14 +446,14 @@ int main() {
     // 初期化した粒子位置で隣接リストを構築する
     generate_NL();
 
-    // 初期速度は、温度T = 1.0のマクスウェル・ボルツマン分布から引っ張ってくる
-    init_vel_MB(1.0, mt);
+    // 初期速度は、温度T = 2.0のマクスウェル・ボルツマン分布から引っ張ってくる
+    init_vel_MB(2.0, mt);
 
     // t = 1e5の長さのNVEシミュレーションを実行（時間を測りながら）
     auto start = std::chrono::system_clock::now();
-    NVE(1e+2);  //equilibration run
+    NVE(t_eq, false);  //equilibration run
     std::cout << "equilibration run 終了" << std::endl;
-    NVE(1e+5);  //production run
+    NVE(t_eq, true);  //production run
     std::cout << "production run 終了" << std::endl;
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
