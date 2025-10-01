@@ -1,3 +1,8 @@
+/**
+* @file MD.hpp
+* @brief MDクラス
+*/
+
 #ifndef MD_HPP
 #define MD_HPP
 
@@ -20,27 +25,117 @@ class MD{
         MD(RealType dt, RealType cutoff, RealType margin, const Atoms& atoms, torch::Device device = torch::kCPU); 
 
         //シミュレーション
+        /**
+         * @brief NVEシミュレーションの実行
+         * @param[in] tsim シミュレーション時間 (fs)
+         * @param[in] temp 初期温度
+         * @param[in] step 何ステップごとに出力するか
+         * @param[in] is_save 各ステップごとにtrajectoryを保存するか
+         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         */
         void NVE(const RealType tsim, const RealType temp, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
+        /**
+         * @brief NVEシミュレーションの実行
+         * @param[in] tsim シミュレーション時間 (fs)
+         * @param[in] temp 初期温度
+         * @param[in] log その他の保存方法（現在はlogスケールのみ）
+         * @param[in] is_save 各ステップごとにtrajectoryを保存するか
+         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         */
         void NVE(const RealType tsim, const RealType temp, const std::string log, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
 
         //一定温度のシミュレーション
+        /**
+         * @brief NVTシミュレーションの実行
+         * 
+         * 一定温度のNVTシミュレーション
+         * 
+         * @param[in] tsim シミュレーション時間 (fs)
+         * @param[in] Thermostat 熱浴
+         * @param[in] step 何ステップごとに出力するか
+         * @param[in] is_save 各ステップごとにtrajectoryを保存するか
+         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         * 
+         * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
+         */
         template <typename ThermostatType>
         void NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");            
+        /**
+         * @brief NVTシミュレーションの実行
+         * 
+         * 一定温度のNVTシミュレーション
+         * 
+         * @param[in] tsim シミュレーション時間 (fs)
+         * @param[in] Thermostat 熱浴
+         * @param[in] log その他の保存方法（現在はlogスケールのみ）
+         * @param[in] is_save 各ステップごとにtrajectoryを保存するか
+         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         * 
+         * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
+         * 
+         */
         template <typename ThermostatType>
         void NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");        
 
         //温度変化をさせるシミュレーション
+        /**
+         * @brief NVTシミュレーションの実行
+         * 
+         * 温度を変化させるシミュレーション
+         * 
+         * @param[in] cooling_rate 冷却速度 (K/fs)
+         * @param[in] Thermostat 熱浴
+         * @param[in] targ_temp 目標温度 (K)
+         * @param[in] step 何ステップごとに出力するか
+         * @param[in] is_save 各ステップごとにtrajectoryを保存するか
+         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         * 
+         * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
+         * 
+         */
         template <typename ThermostatType>
         void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
+        /**
+         * @brief NVTシミュレーションの実行
+         * 
+         * 温度を変化させるシミュレーション
+         * 
+         * @param[in] cooling_rate 冷却速度 (K/fs)
+         * @param[in] Thermostat 熱浴
+         * @param[in] targ_temp 目標温度 (K)
+         * @param[in] log その他の保存方法（現在はlogスケールのみ）
+         * @param[in] is_save 各ステップごとにtrajectoryを保存するか
+         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         * 
+         * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
+         * 
+         */
         template <typename ThermostatType>
         void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
 
         //原子の保存
+        /**
+         * @brief 現在の系を保存
+         * @param[in] save_path 保存するパス
+         */
         void save_atoms(const std::string& save_path);
+        /**
+         * @brief 現在の系を保存
+         * 
+         * pbcをアンラップして保存
+         * 
+         * @param[in] save_path 保存するパス
+         */
         void save_unwrapped_atoms(const std::string& save_path);
 
         //時間のリセット（桁溢れ対策）
+        /**
+         * @brief ステップ数を0に戻します。
+         */
         void reset_step();
+        /**
+         * @brief 原子が何個目のミラーにあるかを保存する配列をリセットします。
+         */
         void reset_box();
 
         //テスト用
@@ -55,19 +150,67 @@ class MD{
 
     private:
         //その他（補助用関数）
+        /**
+         * @brief 経過時間・運動エネルギー・ポテンシャルエネルギー・全エネルギー・温度を出力します。
+         */
         void print_energies();                                          //結果の出力
+        /**
+         * @brief 温度をもとに、原子の速度を初期化します。
+         * 
+         * @param[in] initial_temp 温度 (K)
+         */
         void init_temp(const RealType initial_temp);                     //原子の速度（温度）の初期化
 
+        /**
+         * @brief NVEシミュレーションを1ステップ行います。
+         * 
+         * @param[in] box メンバ変数なためあとで消します。
+         */
         void step(torch::Tensor& box);                                  //1ステップ
+        /**
+         * @brief NVTシミュレーションを1ステップ行います。
+         * 
+         * @param[in] box メンバ変数なためあとで消します。
+         * @param[in] Thermostat nose-hoover熱浴
+         */
         void step(torch::Tensor& box, NoseHooverThermostat& Thermostat);
+        /**
+         * @brief NVTシミュレーションを1ステップ行います。
+         * 
+         * @param[in] box メンバ変数なためあとで消します。
+         * @param[in] Thermostat bussir熱浴
+         */
         void step(torch::Tensor& box, BussiThermostat& Thermostat);
 
+        /**
+         * @brief NVEシミュレーションのメインループ
+         * 
+         * @param[in] tsim シミュレーション時間 (fs)
+         * @param[in] temp 初期温度
+         * @param[in] output_action 出力関数
+         */
         template <typename OutputAction>
         void NVE_loop(const RealType tsim, const RealType temp, OutputAction output_action);
 
+        /**
+         * @brief NVTシミュレーションのメインループ
+         * 
+         * @param[in] tsim シミュレーション時間 (fs)
+         * @param[in] Thermostat 熱浴
+         * @param[in] output_action 出力関数
+         */
         template <typename OutputAction, typename ThermostatType>
         void NVT_loop(const RealType tsim, ThermostatType& Thermostat, OutputAction output_action);
 
+        /**
+         * @brief NVTシミュレーションのメインループ
+         * 
+         * 温度を変化させながらシミュレーション
+         * 
+         * @param[in] cooling_rate 冷却速度 (K/fs)
+         * @param[in] Thermostat 熱浴
+         * @param[in] output_action 出力関数
+         */
         template <typename OutputAction, typename ThermostatType>
         void NVT_anneal_loop(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, OutputAction output_action);
 
