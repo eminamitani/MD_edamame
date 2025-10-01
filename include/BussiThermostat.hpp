@@ -55,7 +55,7 @@ class BussiThermostat {
 
         /**
          * @brief 熱浴の更新
-         * @param[in] atoms 温度制御する系
+         * @param[out] atoms 温度制御する系
          * @param[in] dt 時間刻み幅
          */
         void update(Atoms& atoms, const torch::Tensor& dt);
@@ -64,7 +64,7 @@ class BussiThermostat {
          * 
          * Atomsクラスを使わず、速度と運動エネルギーを直接指定する時に指定します。
          * 
-         * @param[in] atoms_velocities 温度制御する系の速度 
+         * @param[out] atoms_velocities 温度制御する系の速度 
          * (N, 3)のtorch::Tensor
          * 
          * @param[in] kinetic_energy 温度制御する系の運動エネルギー 
