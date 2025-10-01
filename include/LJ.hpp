@@ -1,3 +1,9 @@
+/**
+* @file LJ.hpp
+* @brief LJポテンシャルによる力とポテンシャルの計算
+* @note NNPの方と無理やりくっつけているので使用非推奨です。テストのためだけに使っています。
+*/
+
 #ifndef LJ_HPP
 #define LJ_HPP
 

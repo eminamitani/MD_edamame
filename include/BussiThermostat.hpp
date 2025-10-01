@@ -21,20 +21,20 @@ class BussiThermostat {
         BussiThermostat(const RealType& targ_temp, const RealType& tau, const torch::Device& device = torch::kCPU);
 
         /**
-         * @brief 熱浴の温度を取得します。
+         * @brief 熱浴の温度を取得
          * @return 温度
          * @note 戻り値は0次元のtorch::Tensorです。
          */
         const torch::Tensor& temp() const { return targ_temp_; }
         /**
-         * @brief 熱浴の温度を取得します。
+         * @brief 熱浴の温度を取得
          * @return 温度
          * @note 戻り値はRealType型です。
          */
         RealType temp_real() const { return targ_temp_.item<RealType>(); }
 
         /**
-         * @brief 熱浴のセットアップをします。
+         * @brief 熱浴のセットアップ
          * 
          * 自由度を初期化します。
          * 使用前に必ず呼んでください。
@@ -43,7 +43,7 @@ class BussiThermostat {
          */
         void setup(const Atoms& atoms);
         /**
-         * @brief 熱浴のセットアップをします。
+         * @brief 熱浴のセットアップ
          * 
          * 自由度を初期化します。
          * 使用前に必ず呼んでください。
@@ -54,13 +54,13 @@ class BussiThermostat {
         void setup(const torch::Tensor& dof);
 
         /**
-         * @brief 熱浴の更新をします。
+         * @brief 熱浴の更新
          * @param[in] atoms 温度制御する系
          * @param[in] dt 時間刻み幅
          */
         void update(Atoms& atoms, const torch::Tensor& dt);
         /**
-         * @brief 熱浴の更新をします。
+         * @brief 熱浴の更新
          * 
          * Atomsクラスを使わず、速度と運動エネルギーを直接指定する時に指定します。
          * 
@@ -75,12 +75,12 @@ class BussiThermostat {
         void update(torch::Tensor& atoms_velocities, const torch::Tensor& kinetic_energy, const torch::Tensor& dt);
 
         /**
-         * @brief 目標温度を指定します。
+         * @brief 目標温度を指定
          * @param[in] targ_temp 目標温度 
          */
         void set_temp(const torch::Tensor& targ_temp) { targ_temp_ = targ_temp; }
         /**
-         * @brief 目標温度を指定します。
+         * @brief 目標温度を指定
          * @param[in] targ_temp 目標温度 
          */
         void set_temp(const RealType& targ_temp);

@@ -1,6 +1,7 @@
 /**
 * @file Atom.hpp
 * @brief Atomクラス
+* @note Atomsクラスだけのために存在しているため無くした方が良いと思う。
 */
 
 #ifndef ATOM_HPP

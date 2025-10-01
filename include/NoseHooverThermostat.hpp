@@ -80,7 +80,7 @@ class NoseHooverThermostat {
          * 使用前に必ず呼んでください。
          * 自由度を初期化します。
          * 
-         * @param[in] atoms 温度制御する系
+         * @param[out] atoms 温度制御する系
          */
         void setup(Atoms& atoms);
         /**
@@ -97,7 +97,7 @@ class NoseHooverThermostat {
         //更新
         /**
          * @brief 熱浴の更新
-         * @param[in] atoms 温度制御する系
+         * @param[out] atoms 温度制御する系
          * @param[in] dt 時間刻み幅
          */
         void update(Atoms& atoms, const torch::Tensor& dt);
@@ -106,7 +106,7 @@ class NoseHooverThermostat {
          * 
          * atomsクラスを用いず、温度をそのまま入力する際に使用します。
          * 
-         * @param[in] atoms_velocities 制御する速度
+         * @param[out] atoms_velocities 制御する速度
          * @param[in] kinetic_energy 運動エネルギー
          * @param[in] dt 時間刻み幅
          */

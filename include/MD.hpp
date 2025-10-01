@@ -54,7 +54,7 @@ class MD{
          * @param[in] Thermostat 熱浴
          * @param[in] step 何ステップごとに出力するか
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
          * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
          */
@@ -69,7 +69,7 @@ class MD{
          * @param[in] Thermostat 熱浴
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
          * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
          * 
@@ -88,7 +88,7 @@ class MD{
          * @param[in] targ_temp 目標温度 (K)
          * @param[in] step 何ステップごとに出力するか
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
          * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
          * 
@@ -105,7 +105,7 @@ class MD{
          * @param[in] targ_temp 目標温度 (K)
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
+         * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
          * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
          * 
@@ -151,31 +151,31 @@ class MD{
     private:
         //その他（補助用関数）
         /**
-         * @brief 経過時間・運動エネルギー・ポテンシャルエネルギー・全エネルギー・温度を出力します。
+         * @brief 経過時間・運動エネルギー・ポテンシャルエネルギー・全エネルギー・温度を出力
          */
         void print_energies();                                          //結果の出力
         /**
-         * @brief 温度をもとに、原子の速度を初期化します。
+         * @brief 温度をもとに、原子の速度を初期化
          * 
          * @param[in] initial_temp 温度 (K)
          */
         void init_temp(const RealType initial_temp);                     //原子の速度（温度）の初期化
 
         /**
-         * @brief NVEシミュレーションを1ステップ行います。
+         * @brief NVEシミュレーションを1ステップ行う
          * 
          * @param[in] box メンバ変数なためあとで消します。
          */
         void step(torch::Tensor& box);                                  //1ステップ
         /**
-         * @brief NVTシミュレーションを1ステップ行います。
+         * @brief NVTシミュレーションを1ステップ行う
          * 
          * @param[in] box メンバ変数なためあとで消します。
          * @param[in] Thermostat nose-hoover熱浴
          */
         void step(torch::Tensor& box, NoseHooverThermostat& Thermostat);
         /**
-         * @brief NVTシミュレーションを1ステップ行います。
+         * @brief NVTシミュレーションを1ステップ行う
          * 
          * @param[in] box メンバ変数なためあとで消します。
          * @param[in] Thermostat bussir熱浴

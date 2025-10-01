@@ -14,13 +14,13 @@
 
 namespace inference{
     /**
-     * @brief torchscript形式のモデルをロードします。
+     * @brief torchscript形式のモデルをロード
      * @return モデル
      * @param[in] model_path モデルのパス
      */
     torch::jit::script::Module load_model(std::string model_path);   
      /**
-     * @brief 系の原子番号・接続情報から系のポテンシャル・力を推論します。
+     * @brief 系の原子番号・接続情報から系のポテンシャル・力を推論
      * @return ポテンシャル・力
      * - `first` (torch::Tensor) ポテンシャル
      * 0次元のtorch::Tensor
@@ -36,7 +36,7 @@ namespace inference{
      */
     c10::ivalue::TupleElements infer_from_tensor(torch::jit::script::Module& module, torch::Tensor x, torch::Tensor edge_index, torch::Tensor edge_weight);                                                         
      /**
-     * @brief 系の前処理をします。
+     * @brief 系の前処理
      * 
      * 隣接リストを使用しない場合に用います。
      * 
@@ -52,7 +52,7 @@ namespace inference{
      */
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> RadiusInteractionGraph(Atoms& atoms, torch::Tensor cutoff);                                       //cutoff距離以内にある原子のペアを探す
      /**
-     * @brief 系の前処理をします。
+     * @brief 系の前処理
      * @return 原子番号・接続情報
      * - `first` (torch::Tensor) 原子番号
      * (N, )のtorch::Tensor  
@@ -65,7 +65,7 @@ namespace inference{
      */
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> RadiusInteractionGraph(Atoms& atoms, NeighbourList NL);                                           //隣接リストを使用する場合はこっち
      /**
-     * @brief 系に対して、ポテンシャルと力を推論し、力とポテンシャルを系にセットします。
+     * @brief 系に対して、ポテンシャルと力を推論し、力とポテンシャルを系にセット
      * 隣接リストを使用しない場合に用います。
      * @param[in] module モデル
      * @param[in] atoms 系
@@ -73,14 +73,14 @@ namespace inference{
      */
     void calc_energy_and_force_MLP(torch::jit::script::Module& module, Atoms& atoms, torch::Tensor cutoff);                                                   //一つの構造に対して、エネルギーと力を計算
      /**
-     * @brief 系に対して、ポテンシャルと力を推論し、力とポテンシャルを系にセットします。
+     * @brief 系に対して、ポテンシャルと力を推論し、力とポテンシャルを系にセット
      * @param[in] module モデル
      * @param[in] atoms 系
      * @param[in] NL 隣接リスト
      */
     void calc_energy_and_force_MLP(torch::jit::script::Module& module, Atoms& atoms, NeighbourList NL);
      /**
-     * @brief 系に対して、ポテンシャルを推論し、力をその微分から計算します。その後、力とポテンシャルを系にセットします。
+     * @brief 系に対して、ポテンシャルを推論し、力をその微分から計算します。その後、力とポテンシャルを系にセット
      * @note 使う必要はありません。
      * @param[in] module モデル
      * @param[in] atoms 系

@@ -23,54 +23,54 @@ public:
 
     //ゲッタ
     /**
-     * @brief すべての原子の座標を取得します
+     * @brief すべての原子の座標を取得
      * @return 座標
      * @note 戻り値は(N, 3)のtorch::Tensorです。
      */
     const torch::Tensor& positions() const { return positions_; }
     /**
-     * @brief すべての原子の速度を取得します
+     * @brief すべての原子の速度を取得
      * @return 速度
      * @note 戻り値は(N, 3)のtorch::Tensorです。
      */
     const torch::Tensor& velocities() const { return velocities_; }
     /**
-     * @brief すべての原子にかかっている力を取得します
+     * @brief すべての原子にかかっている力を取得
      * @return 力
      * @note 戻り値は(N, 3)のtorch::Tensorです。
      */
     const torch::Tensor& forces() const { return forces_; }
     /**
-     * @brief すべての原子の原子番号を取得します
+     * @brief すべての原子の原子番号を取得
      * @return 原子番号
      * @note 戻り値は(N, )のtorch::Tensorです。
      */
     const torch::Tensor& atomic_numbers() const { return atomic_numbers_; }
     /**
-     * @brief すべての原子の質量を取得します
+     * @brief すべての原子の質量を取得
      * @return 質量
      * @note 戻り値は(N, )のtorch::Tensorです。
      */
     const torch::Tensor& masses() const { return masses_; }
     /**
-     * @brief 系の1辺の長さを取得します
+     * @brief 系の1辺の長さを取得
      * @return 1辺の長さ
      * @note 戻り値は0次元のtorch::Tensorです。正方形の系のみを想定しています。
      */
     const torch::Tensor& box_size() const { return box_size_; }
     /**
-     * @brief デバイスを取得します
+     * @brief デバイスを取得
      * @return デバイス
      */
     const torch::Device& device() const { return device_; }
     /**
-     * @brief 粒子数を取得します
+     * @brief 粒子数を取得
      * @return 粒子数
      * @note 戻り値は0次元のtorch::Tensorです。
      */
     const torch::Tensor& size() const { return n_atoms_; }
     /**
-     * @brief すべての原子の原子番号を取得します。
+     * @brief すべての原子の原子番号を取得
      * @return 原子番号
      * @note 戻り値は(N, )のstd::vector<std::string>です。
      */
@@ -78,7 +78,7 @@ public:
 
     //セッタ
     /**
-     * @brief すべての原子の座標を設定します。
+     * @brief すべての原子の座標を設定
      * 
      * 座標は(N, 3)のtorch::Tensorでなければなりません。
      * 
@@ -86,7 +86,7 @@ public:
      */
     void set_positions(const torch::Tensor& positions);
     /**
-     * @brief すべての原子の速度を設定します。
+     * @brief すべての原子の速度を設定
      * 
      * 速度は(N, 3)のtorch::Tensorでなければなりません。
      * 
@@ -94,7 +94,7 @@ public:
      */
     void set_velocities(const torch::Tensor& velocities);
     /**
-     * @brief すべての原子にかかっている力を設定します。
+     * @brief すべての原子にかかっている力を設定
      * 
      * 力は(N, 3)のtorch::Tensorでなければなりません。
      * 
@@ -102,7 +102,7 @@ public:
      */
     void set_forces(const torch::Tensor& forces);
     /**
-     * @brief すべての原子の質量を設定します。
+     * @brief すべての原子の質量を設定
      * 
      * 質量は(N, )のtorch::Tensorでなければなりません。
      * 
@@ -110,7 +110,7 @@ public:
      */
     void set_masses(const torch::Tensor& masses);
     /**
-     * @brief 系のサイズを設定します。
+     * @brief 系のサイズを設定
      * 
      * 一辺の長さのみを指定します。正方形の系のみに対応しています。
      * 一辺の長さは0次元のtorch::Tensorでなければなりません。
@@ -119,7 +119,7 @@ public:
      */
     void set_box_size(const torch::Tensor& box_size);
     /**
-     * @brief ポテンシャルエネルギーを設定します。
+     * @brief ポテンシャルエネルギーを設定
      * 
      * ポテンシャルエネルギーは0次元のtorch::Tensorでなければなりません。
      * 
@@ -127,7 +127,7 @@ public:
      */
     void set_potential_energy(const torch::Tensor& potential_energy);
     /**
-     * @brief すべての原子の原子番号を指定します。
+     * @brief すべての原子の原子番号を指定
      * 
      * 原子番号は(N, )のtorch::Tensorでなければなりません。
      * 
@@ -135,7 +135,7 @@ public:
      */
     void set_atomic_numbers(const torch::Tensor& atomic_numbers);
     /**
-     * @brief すべての原子の元素記号を指定します。
+     * @brief すべての原子の元素記号を指定
      * 
      * 元素記号は(N, )のstd::vectorでなければなりません。
      * 
@@ -145,19 +145,19 @@ public:
 
     //物理量の計算
     /**
-     * @brief 運動エネルギーを計算して、返します。
+     * @brief 運動エネルギーを計算して、返す
      * @return 運動エネルギー
      * @note 戻り値は0次元のtorch::Tensorです。
      */
     torch::Tensor kinetic_energy() const;
     /**
-     * @brief ポテンシャルエネルギーを取得します。
+     * @brief ポテンシャルエネルギーを取得
      * @return ポテンシャルエネルギー
      * @note 戻り値は0次元のtorch::Tensorです。
      */
     torch::Tensor potential_energy() const { return potential_energy_; }
     /**
-     * @brief 系の温度を計算して、返します。
+     * @brief 系の温度を計算して、返す
      * @return 温度
      * @note 戻り値は0次元のtorch::Tensorです。
      */
@@ -165,7 +165,7 @@ public:
 
     //その他
     /**
-     * @brief 力に従って座標を更新します。
+     * @brief 力に従って座標を更新
      * 
      * velocity-verlet法に基づいて更新します。
      * 
@@ -174,7 +174,7 @@ public:
      */
     void positions_update(const torch::Tensor dt, torch::Tensor& box);
     /**
-     * @brief 力に従って速度を更新します。
+     * @brief 力に従って速度を更新
      * 
      * velocity-verlet法に基づいて更新します。
      * 
@@ -182,24 +182,24 @@ public:
      */
     void velocities_update(const torch::Tensor dt);
     /**
-     * @brief 周期境界条件の補正を適用します。
+     * @brief 周期境界条件の補正を適用
      */
     void apply_pbc(); //周期境界条件の補正
     /**
-     * @brief 周期境界条件の補正を適用します。
+     * @brief 周期境界条件の補正を適用
      * 
      * @param シミュレーションボックスを何回はみ出したかを保存する配列
      */
     void apply_pbc(torch::Tensor& box);
 
      /**
-     * @brief ドリフト速度を計算して、除去します。
+     * @brief ドリフト速度を計算して、除去
      */
     void remove_drift();    //全体速度の除去
 
     //static関数
      /**
-     * @brief 2粒子LJユニットを作成します。
+     * @brief 2粒子LJユニットを作成
      * @param[in] N 原子数
      * @param[in] ratio A粒子の割合
      * @param[in] rho 数密度
