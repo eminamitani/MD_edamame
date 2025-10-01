@@ -320,8 +320,6 @@ void MD::NVT_loop(const RealType tsim, ThermostatType& Thermostat, OutputAction 
 
 template <typename OutputAction, typename ThermostatType>
 void MD::NVT_anneal_loop(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, OutputAction output_action) {
-    init_temp(Thermostat.temp().template item<RealType>());
-
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     Thermostat.setup(atoms_);
@@ -403,6 +401,10 @@ void MD::reset_step() {
     t_ = 0;
 }
 
+void MD::reset_box() {
+    box_ = torch::zeros({num_atoms_.item<IntType>(), 3}, torch::TensorOptions().dtype(kIntType).device(device_));
+}
+
 void MD::save_unwrapped_atoms(const std::string& save_path) {
     xyz::save_unwrapped_atoms(save_path, atoms_, box_);
 }
@@ -461,8 +463,6 @@ void MD::NVE_loop_LJ(const RealType tsim, const RealType temp, OutputAction outp
 
 template <typename OutputAction, typename ThermostatType>
 void MD::NVT_loop_LJ(const RealType tsim, ThermostatType& Thermostat, OutputAction output_action) {
-    init_temp(Thermostat.temp().template item<RealType>());
-
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     Thermostat.setup(atoms_);
@@ -496,8 +496,6 @@ void MD::NVT_loop_LJ(const RealType tsim, ThermostatType& Thermostat, OutputActi
 
 template <typename OutputAction, typename ThermostatType>
 void MD::NVT_anneal_loop_LJ(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, OutputAction output_action) {
-    init_temp(Thermostat.temp().template item<RealType>());
-
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     Thermostat.setup(atoms_);

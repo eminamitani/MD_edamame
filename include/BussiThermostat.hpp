@@ -1,3 +1,8 @@
+/**
+* @file BussiThermostat.hpp
+* @brief BussiThermostatクラス
+*/
+
 #ifndef BUSSI_THERMOSTAT_HPP
 #define BUSSI_THERMOSTAT_HPP
 

@@ -34,15 +34,15 @@ int main(){
     MD md = MD(dt, cutoff, margin, data_path, model_path, device);
 
     //シミュレーションの実行（緩和）
-    md.NVT(t_eq, bussi_thermostat, 100, false, "./output_NS4_eq1.xyz");
+    md.NVT(t_eq, bussi_thermostat, "log", false, "./output_NS4_eq1_3.xyz");
     std::cout << "緩和完了" << std::endl;
 
     //シミュレーションの実行（冷却）
-    md.NVT_anneal(cooling_rate, bussi_thermostat, T_targ, 100, false, "./output_NS4_quenched.xyz");
+    md.NVT_anneal(cooling_rate, bussi_thermostat, T_targ, 100, false, "./output_NS4_quenched_3.xyz");
     std::cout << "冷却完了" << std::endl;
 
     //シミュレーションの実行（緩和）
-    md.NVT(t_eq, bussi_thermostat, 100, false, "./output_NS4_eq2.xyz");
+    md.NVT(t_eq, bussi_thermostat, "log", false, "./output_NS4_eq2_3.xyz");
     std::cout << "緩和完了" << std::endl;
 
     //終了時刻を記録

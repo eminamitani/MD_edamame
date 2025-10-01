@@ -22,11 +22,10 @@ int main(){
     const RealType tau = 1.0;
     const IntType chain_length = 1;
 
-    const RealType T_0 = 2.0;                 
-    const RealType T_targ = 2.0;            //ターゲット温度
+    const RealType T_0 = 0.5;                 
+    const RealType T_targ = 0.5;            //ターゲット温度
 
-    const RealType tau_alpha = 6.68;
-    const RealType t_eq = tau_alpha * 50;
+    const RealType t_eq = 1.0e+4;
     const RealType t_pr = t_eq;
 
     //現在時刻を記録
@@ -45,6 +44,7 @@ int main(){
     thermostat.set_temp(T_0);
     md.NVT_LJ(t_eq, thermostat, "log", false, "./LJ_2_eq1.xyz");
     md.reset_step();
+    md.reset_box();
 
     //T = T_targでproduction run
     thermostat.set_temp(T_targ);

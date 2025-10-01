@@ -6,8 +6,8 @@
 
 //原子種類と原子番号を関連づけるmap
 inline std::map<std::string, int> atom_number_map = {
-        {"A", 1},       //LJユニット用
-        {"B", 0},       //LJユニット用
+        {"A", 0},       //LJユニット用
+        {"B", 1},       //LJユニット用
         {"H",  1},
         {"He", 2},
         {"Li", 3},
@@ -57,13 +57,13 @@ inline std::map<std::string, double> atom_mass_map = {
     };
 
 //精度の設定
-using RealType = double;
+using RealType = float;
 constexpr torch::ScalarType kRealType = torch::kFloat32;
 
-using IntType = int;
+using IntType = long;
 constexpr torch::ScalarType kIntType = torch::kInt64;
 
-constexpr bool is_LJ_unit = true;
+constexpr bool is_LJ_unit = false;
 
 //定数
 //ボルツマン定数 (eV / K)

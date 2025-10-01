@@ -15,7 +15,7 @@ int main(){
     const RealType ratio = 0.8;             //粒子Aの割合
 
     //シミュレーション定数
-    const RealType dt = 5e-3;                //タイムステップ
+    const RealType dt = 1e-3;                //タイムステップ
     const RealType cutoff = 2.0;            //カットオフ距離
     const RealType margin = 0.7;            //隣接リストのマージン
 

@@ -1,3 +1,8 @@
+/**
+* @file Atom.hpp
+* @brief Atomクラス
+*/
+
 #ifndef ATOM_HPP
 #define ATOM_HPP
 

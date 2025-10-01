@@ -52,7 +52,7 @@ void NoseHooverThermostat::setup(Atoms& atoms) {
 }
 
 void NoseHooverThermostat::setup(const torch::Tensor dof) {
-    dof_ = dof.to(device_);
+    dof_ = dof.clone().to(device_);
     torch::Tensor tau2 = torch::pow(tau_, 2);
     masses_.fill_(boltzmann_constant_ * target_tmp_ * tau2);
     masses_[0] *= dof_;

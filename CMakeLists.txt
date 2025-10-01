@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
-#project(MD_MLP)
-project(MD_LJ)
+project(MD_MLP)
+#project(MD_LJ)
 
 # C++17 を使用（必要に応じて変更）
 set(CMAKE_CXX_STANDARD 17)
@@ -18,8 +18,9 @@ find_package(Torch REQUIRED PATHS ${Torch_DIR})
 
 # ソースファイルのリスト
 set(SOURCES
-#    src/main_MQ.cpp
-    src/simulate_LJ_NHC.cpp
+    src/main_MQ.cpp
+#    src/main_LJ_NoseHoover.cpp
+#    src/simulate_LJ_NHC_torch_4.cpp
     src/NoseHooverThermostat.cpp
     src/BussiThermostat.cpp
     src/Atoms.cpp
@@ -31,13 +32,13 @@ set(SOURCES
 )
 
 # 実行ファイルを作成
-#add_executable(MD_MLP ${SOURCES})
-add_executable(MD_LJ ${SOURCES})
+add_executable(MD_MLP ${SOURCES})
+#add_executable(MD_LJ ${SOURCES})
 
 # libtorchをリンク
-#target_link_libraries(MD_MLP ${TORCH_LIBRARIES})
-target_link_libraries(MD_LJ ${TORCH_LIBRARIES})
+target_link_libraries(MD_MLP ${TORCH_LIBRARIES})
+#target_link_libraries(MD_LJ ${TORCH_LIBRARIES})
 
 # 必須：位置独立コード（libtorchで必要）
-#set_property(TARGET MD_MLP PROPERTY POSITION_INDEPENDENT_CODE ON)
-set_property(TARGET MD_LJ PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET MD_MLP PROPERTY POSITION_INDEPENDENT_CODE ON)
+#set_property(TARGET MD_LJ PROPERTY POSITION_INDEPENDENT_CODE ON)

@@ -71,7 +71,7 @@ void LJ::calc_force(Atoms& atoms, NeighbourList NL) {
     total_forces.index_add_(0, target_index, -force_vec);
 
     //力をセット
-    atoms.set_forces(total_forces);
+    atoms.set_forces(total_forces / 2.0);
 }
 
 void LJ::calc_potential(Atoms& atoms, NeighbourList NL) {
@@ -125,7 +125,7 @@ void LJ::calc_potential(Atoms& atoms, NeighbourList NL) {
     torch::Tensor potential = torch::sum(potentials);
 
     //ポテンシャルをセット
-    atoms.set_potential_energy(potential);
+    atoms.set_potential_energy(potential / 2.0);
 }
 
 void LJ::calc_energy_and_force(Atoms& atoms, NeighbourList NL) {

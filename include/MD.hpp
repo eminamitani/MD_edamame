@@ -41,6 +41,7 @@ class MD{
 
         //時間のリセット（桁溢れ対策）
         void reset_step();
+        void reset_box();
 
         //テスト用
         void NVE_LJ(const RealType tsim, const RealType temp, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
