@@ -1,3 +1,8 @@
+/**
+* @file xyz.hpp
+* @brief xyzファイルの読み込み・書き込み
+*/
+
 #ifndef XYZ_HPP
 #define XYZ_HPP
 
@@ -14,7 +19,7 @@ namespace xyz{
 
     //構造の保存
     void save_atoms(const std::string& data_path, const Atoms& atoms);
-    void save_unwrapped_atoms(const std::string& data_path, const Atoms& atoms, const torch::Tensor& box);  //boxを考慮して保存（まだ作ってない）
+    void save_unwrapped_atoms(const std::string& data_path, const Atoms& atoms, const torch::Tensor& box);
 }
 
 #endif

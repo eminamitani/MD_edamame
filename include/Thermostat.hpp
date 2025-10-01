@@ -1,3 +1,10 @@
+/**
+* @file Thermostat.hpp
+*
+* @brief Thermostatクラス
+* いつか使うかもと思って作りましたが、結局使ってないです。
+*/
+
 #ifndef THERMOSTAT_HPP
 #define THERMOSTAT_HPP
 

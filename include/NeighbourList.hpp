@@ -19,25 +19,25 @@ class NeighbourList {
         /**
          * @brief ソース原子のインデックスを取得します。
          * @return ソース原子のインデックス
-         * (num_edges, )のtorch::Tensor
+         * @note 戻り値は(num_edges, )のtorch::Tensor
          */
         const torch::Tensor& source_index() const { return source_index_; }
         /**
          * @brief ターゲット原子のインデックスを取得します。
          * @return ターゲット原子のインデックス
-         * (num_edges, )のtorch::Tensor
+         * @note 戻り値は(num_edges, )のtorch::Tensor
          */
         const torch::Tensor& target_index() const { return target_index_; }
         /**
          * @brief カットオフ距離を取得します。
          * @return カットオフ距離
-         * 0次元のtorch::Tensor
+         * @note 戻り値は0次元のtorch::Tensor
          */
         const torch::Tensor& cutoff() const { return cutoff_; }
         /**
          * @brief 前回の原子配置を取得します。
          * @return カットオフ距離
-         * (N, 3)のtorch::Tensor
+         * @note 戻り値は(N, 3)のtorch::Tensor
          */
         const torch::Tensor& NL_config() const { return NL_config_; }
         /**
