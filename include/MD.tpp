@@ -440,7 +440,7 @@ void MD::reset_box() {
 }
 
 void MD::save_atoms(const std::string& save_path) {
-    xyz::save_atoms(save_path, atoms_, box_);
+    xyz::save_atoms(save_path, atoms_);
 }
 
 void MD::save_unwrapped_atoms(const std::string& save_path) {
