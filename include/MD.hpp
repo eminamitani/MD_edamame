@@ -90,7 +90,7 @@ class MD{
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
          * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
-         * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
+         * @note 熱浴に、あらかじめ初期温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>
@@ -107,7 +107,7 @@ class MD{
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
          * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
-         * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
+         * @note 熱浴に、あらかじめ初期温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>

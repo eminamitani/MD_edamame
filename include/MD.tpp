@@ -439,6 +439,10 @@ void MD::reset_box() {
     box_ = torch::zeros({num_atoms_.item<IntType>(), 3}, torch::TensorOptions().dtype(kIntType).device(device_));
 }
 
+void MD::save_atoms(const std::string& save_path) {
+    xyz::save_atoms(save_path, atoms_, box_);
+}
+
 void MD::save_unwrapped_atoms(const std::string& save_path) {
     xyz::save_unwrapped_atoms(save_path, atoms_, box_);
 }
