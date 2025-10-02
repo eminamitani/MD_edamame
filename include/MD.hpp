@@ -167,24 +167,20 @@ class MD{
 
         /**
          * @brief NVEシミュレーションを1ステップ行う
-         * 
-         * @param[in] box メンバ変数なためあとで消します。
          */
-        void step(torch::Tensor& box);                                  //1ステップ
+        void step();                                  //1ステップ
         /**
          * @brief NVTシミュレーションを1ステップ行う
          * 
-         * @param[in] box メンバ変数なためあとで消します。
          * @param[in] Thermostat nose-hoover熱浴
          */
-        void step(torch::Tensor& box, NoseHooverThermostat& Thermostat);
+        void step(NoseHooverThermostat& Thermostat);
         /**
          * @brief NVTシミュレーションを1ステップ行う
          * 
-         * @param[in] box メンバ変数なためあとで消します。
          * @param[in] Thermostat bussir熱浴
          */
-        void step(torch::Tensor& box, BussiThermostat& Thermostat);
+        void step(BussiThermostat& Thermostat);
 
         /**
          * @brief NVEシミュレーションのメインループ

@@ -311,24 +311,24 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
 
 //=====シミュレーション（1ステップ）=====
 //NVEの1ステップ
-void MD::step(torch::Tensor& box) {
+void MD::step() {
     atoms_.velocities_update(dt_);      //速度の更新（1回目）
-    atoms_.positions_update(dt_, box);  //位置の更新
+    atoms_.positions_update(dt_, box_);  //位置の更新
     NL_.update(atoms_);                 //NLの確認と更新
     inference::calc_energy_and_force_MLP(module_, atoms_, NL_); //力の更新
     atoms_.velocities_update(dt_);      //速度の更新（2回目）
 }
 
 //NVTの1ステップ（Nose-Hoover）
-void MD::step(torch::Tensor& box, NoseHooverThermostat& Thermostat) {
+void MD::step(NoseHooverThermostat& Thermostat) {
     Thermostat.update(atoms_, dt_);     //熱浴の更新
-    step(box);
+    step();
     Thermostat.update(atoms_, dt_);     //熱浴の更新
 }
 
 //NVTの1ステップ（Bussi）
-void MD::step(torch::Tensor& box, BussiThermostat& Thermostat) {
-    step(box);
+void MD::step(BussiThermostat& Thermostat) {
+    step();
     Thermostat.update(atoms_, dt_);     //熱浴の更新
 }
 
@@ -339,7 +339,7 @@ void MD::NVE_loop(const RealType tsim, const RealType temp, OutputAction output_
     steps += t_;
 
     while(t_ < steps){
-        step(box_);
+        step();
 
         t_ ++;
 
@@ -354,7 +354,7 @@ void MD::NVT_loop(const RealType tsim, ThermostatType& Thermostat, OutputAction 
     steps += t_;
 
     while(t_ < steps){
-        step(box_, Thermostat);
+        step(Thermostat);
         t_ ++;
 
         //出力
@@ -377,7 +377,7 @@ void MD::NVT_anneal_loop(const RealType cooling_rate, ThermostatType& Thermostat
     while(t_ < quench_steps){
         temp_ -= dT;
         Thermostat.set_temp(temp_);
-        step(box_, Thermostat);
+        step(Thermostat);
         t_ ++;
 
         //出力
