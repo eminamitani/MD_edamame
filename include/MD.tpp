@@ -31,6 +31,7 @@ MD::MD(torch::Tensor dt, torch::Tensor cutoff, torch::Tensor margin, std::string
     temp_ = 0.0;
     dt_real_ = dt_.item<RealType>();
     box_ = torch::zeros({num_atoms_.item<IntType>(), 3}, torch::TensorOptions().dtype(kIntType).device(device_));
+    traj_path_ = "./trajectory.xyz";
 }
 
 MD::MD(RealType dt, RealType cutoff, RealType margin, std::string data_path, std::string model_path, torch::Device device)
@@ -53,6 +54,7 @@ MD::MD(RealType dt, RealType cutoff, RealType margin, const Atoms& atoms, torch:
     temp_ = 0.0;
     dt_real_ = dt_.item<RealType>();
     box_ = torch::zeros({num_atoms_.item<IntType>(), 3}, torch::TensorOptions().dtype(kIntType).device(device_));
+    traj_path_ = "./trajectory.xyz";
 }
 
 //=====シミュレーション=====
@@ -60,13 +62,26 @@ MD::MD(RealType dt, RealType cutoff, RealType margin, const Atoms& atoms, torch:
 
 //NVEシミュレーション
 void MD::NVE(const RealType tsim, const RealType temp, const IntType step, const bool is_save, const std::string output_path) {
+    init_temp(temp);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)" << std::endl;
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+    print_energies();
+
+    if (is_save) xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+
     if(is_save) {
         NVE_loop(tsim, temp, [this, step]() {
             if(t_ % step == 0) {
                 print_energies();
 
-                std::string path = "./outputs/output_traj.xyz";
-                xyz::save_unwrapped_atoms(path, atoms_, box_);
+                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
             }
         });
     }
@@ -86,6 +101,19 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
     if(log != "log") {
         return; 
     }
+    init_temp(temp);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)" << std::endl;
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+    print_energies();
+
+    if (is_save) xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
 
     const auto logbin = std::pow(10.0, 1.0 / 9);
     int counter = 5;
@@ -97,8 +125,7 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
                 checker *= logbin;
                 print_energies();
 
-                std::string path = "./outputs/output_traj.xyz";
-                xyz::save_unwrapped_atoms(path, atoms_, box_);
+                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
             }
         });
     }
@@ -117,13 +144,26 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
 //NVTシミュレーション
 template <typename ThermostatType>
 void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step, const bool is_save, const std::string output_path) {
+    init_temp(Thermostat.temp().template item<RealType>());
+    Thermostat.setup(atoms_);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+    print_energies();
+    if (is_save) xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+
     if(is_save) {
         NVT_loop(tsim, Thermostat, [this, step]() {
             if(t_ % step == 0) {
                 print_energies();
 
-                std::string path = "./outputs/output_traj.xyz";
-                xyz::save_unwrapped_atoms(path, atoms_, box_);
+                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
             }
         });
     }
@@ -145,6 +185,20 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
         return; 
     }
 
+    init_temp(Thermostat.temp().template item<RealType>());
+    Thermostat.setup(atoms_);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+    print_energies();
+    if (is_save) xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+
     const auto logbin = std::pow(10.0, 1.0 / 9);
     int counter = 5;
     auto checker = 1e-3 * std::pow(logbin, counter);
@@ -155,8 +209,7 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
                 checker *= logbin;
                 print_energies();
 
-                std::string path = "./outputs/output_traj.xyz";
-                xyz::save_unwrapped_atoms(path, atoms_, box_);
+                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
             }
         });
     }
@@ -175,13 +228,26 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
 //温度を変化させながらシミュレーション
 template <typename ThermostatType>
 void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const IntType step, const bool is_save, const std::string output_path) {
+    Thermostat.setup(atoms_);
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
+
+    print_energies();
+    if (is_save) xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+
     if(is_save) {
         NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, [this, step]() {
             if(t_ % step == 0) {
                 print_energies();
 
-                std::string path = "./outputs/output_traj.xyz";
-                xyz::save_unwrapped_atoms(path, atoms_, box_);
+                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
             }
         });
     }
@@ -203,6 +269,20 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
         return; 
     }
 
+    Thermostat.setup(atoms_);
+
+    //NLの作成
+    NL_.generate(atoms_);
+
+    //モデルの推論
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+
+    //ログの見出しを出力しておく
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
+
+    print_energies();
+    if (is_save) xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+
     const auto logbin = std::pow(10.0, 1.0 / 9);
     int counter = 5;
     auto checker = 1e-3 * std::pow(logbin, counter);
@@ -213,8 +293,7 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
                 checker *= logbin;
                 print_energies();
 
-                std::string path = "./outputs/output_traj.xyz";
-                xyz::save_unwrapped_atoms(path, atoms_, box_);
+                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
             }
         });
     }
@@ -256,22 +335,8 @@ void MD::step(torch::Tensor& box, BussiThermostat& Thermostat) {
 //=====シミュレーション（メインループ）=====
 template <typename OutputAction>
 void MD::NVE_loop(const RealType tsim, const RealType temp, OutputAction output_action) {
-    init_temp(temp);
-
-    torch::TensorOptions options = torch::TensorOptions().device(device_);
-
-    //ログの見出しを出力しておく
-    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)" << std::endl;
-
-    //NLの作成
-    NL_.generate(atoms_);
-
-    //モデルの推論
-    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
-
     IntType steps = tsim / dt_real_;    //総ステップ数
     steps += t_;
-    print_energies();
 
     while(t_ < steps){
         step(box_);
@@ -285,24 +350,8 @@ void MD::NVE_loop(const RealType tsim, const RealType temp, OutputAction output_
 
 template <typename OutputAction, typename ThermostatType>
 void MD::NVT_loop(const RealType tsim, ThermostatType& Thermostat, OutputAction output_action) {
-    init_temp(Thermostat.temp().template item<RealType>());
-
-    torch::TensorOptions options = torch::TensorOptions().device(device_);
-
-    Thermostat.setup(atoms_);
-
-    //ログの見出しを出力しておく
-    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
-
-    //NLの作成
-    NL_.generate(atoms_);
-
-    //モデルの推論
-    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
-
     IntType steps = tsim / dt_real_;    //総ステップ数
     steps += t_;
-    print_energies();
 
     while(t_ < steps){
         step(box_, Thermostat);
@@ -320,24 +369,9 @@ void MD::NVT_loop(const RealType tsim, ThermostatType& Thermostat, OutputAction 
 
 template <typename OutputAction, typename ThermostatType>
 void MD::NVT_anneal_loop(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, OutputAction output_action) {
-    torch::TensorOptions options = torch::TensorOptions().device(device_);
-
-    Thermostat.setup(atoms_);
-
-    //NLの作成
-    NL_.generate(atoms_);
-
-    //モデルの推論
-    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
-
     const RealType dT = cooling_rate * dt_real_;                                           //1ステップあたりの下降温度
     IntType quench_steps = static_cast<IntType>(std::ceil((temp_ - targ_temp) / dT));    //冷却ステップ数
     quench_steps += t_;
-
-    //ログの見出しを出力しておく
-    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
-
-    print_energies();
 
     //冷却
     while(t_ < quench_steps){
@@ -407,6 +441,10 @@ void MD::reset_box() {
 
 void MD::save_unwrapped_atoms(const std::string& save_path) {
     xyz::save_unwrapped_atoms(save_path, atoms_, box_);
+}
+
+void MD::set_traj_path(const std::string& path) {
+    traj_path_ = path;
 }
 
 //=====LJユニットによるテスト用関数=====

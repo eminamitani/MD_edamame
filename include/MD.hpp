@@ -130,13 +130,17 @@ class MD{
 
         //時間のリセット（桁溢れ対策）
         /**
-         * @brief ステップ数を0に戻します。
+         * @brief ステップ数を0に戻す
          */
         void reset_step();
         /**
-         * @brief 原子が何個目のミラーにあるかを保存する配列をリセットします。
+         * @brief 原子が何個目のミラーにあるかを保存する配列をリセット
          */
         void reset_box();
+        /**
+         * @brief trajectoryファイルの保存先を変更
+         */
+        void set_traj_path(const std::string& path);
 
         //テスト用
         void NVE_LJ(const RealType tsim, const RealType temp, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
@@ -238,6 +242,7 @@ class MD{
         NeighbourList NL_;                                              //隣接リスト
 
         torch::Tensor box_;                                             //周期境界条件のもとで、何個目の箱のミラーに位置しているのかを保存する変数 (N, 3)
+        std::string traj_path_;                                         //trajectoryを保存するパス
 
         //MLP用変数
         torch::jit::script::Module module_;                              //モデルを格納する変数
