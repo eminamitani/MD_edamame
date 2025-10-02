@@ -1,5 +1,4 @@
 # コードの説明  
-https://github.com/Edamame0011/MD/html/index.html
 ## src/Atom.cpp、src/Atoms.cpp  
 Atom、Atomsクラスの実装
 ## src/inference.cpp
