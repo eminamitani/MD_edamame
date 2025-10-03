@@ -1,11 +1,12 @@
 var class_m_d =
 [
-    [ "NVE", "class_m_d.html#a35a5f5a9269718bf961c09855643c5e4", null ],
-    [ "NVE", "class_m_d.html#aa5a59a448ef7b541c43d0bb6b3ef24b5", null ],
-    [ "NVT", "class_m_d.html#a44185d444dac3e7b49b80b8802a7dbd8", null ],
-    [ "NVT", "class_m_d.html#a772fcf37d4088cc22e6bdaed51526ada", null ],
-    [ "NVT_anneal", "class_m_d.html#a5429cc4ab935423b3b3370f5b9a3b663", null ],
-    [ "NVT_anneal", "class_m_d.html#a6de34c4032e2d9386f602df9bb4ae909", null ],
+    [ "load_atoms", "class_m_d.html#a402bbce162a73988df2b19235bacdad9", null ],
+    [ "NVE", "class_m_d.html#aa4dd0dee4177dbd3aa4d4822a75f4dd2", null ],
+    [ "NVE", "class_m_d.html#a2404fb9fb08468012a7f77d2be670384", null ],
+    [ "NVT", "class_m_d.html#aac5ee6f4ba6c99850f897938f0c0f250", null ],
+    [ "NVT", "class_m_d.html#afe9a8490e417c8d2b0d48e4cd7fb270e", null ],
+    [ "NVT_anneal", "class_m_d.html#a2a4fb81d47a79daa5f9720653d2191ec", null ],
+    [ "NVT_anneal", "class_m_d.html#ab308171f95a9e365f40a141751d43a38", null ],
     [ "reset_box", "class_m_d.html#a762c93e179ebb55a207979048c742230", null ],
     [ "reset_step", "class_m_d.html#abe30564067550e4f1bd05eb38ecb8274", null ],
     [ "save_atoms", "class_m_d.html#a742944afd53fe9c56b914e9e0b876efc", null ],

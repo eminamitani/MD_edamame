@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['xyz_2ehpp_0',['xyz.hpp',['../xyz_8hpp.html',1,'']]]
+  ['thermostat_2ehpp_0',['Thermostat.hpp',['../_thermostat_8hpp.html',1,'']]]
 ];

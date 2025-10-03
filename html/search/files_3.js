@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['lj_2ehpp_0',['LJ.hpp',['../_l_j_8hpp.html',1,'']]]
+  ['inference_2ehpp_0',['inference.hpp',['../inference_8hpp.html',1,'']]]
 ];

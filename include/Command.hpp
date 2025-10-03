@@ -1,3 +1,8 @@
+/**
+* @file Command.hpp
+* @brief 設定ファイルで指定するコマンド
+*/
+
 #ifndef COMMAND_HPP
 #define COMMAND_HPP
 

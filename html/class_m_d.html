@@ -100,22 +100,22 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>MD</b> (RealType dt, RealType cutoff, RealType margin, std::string data_path, std::string model_path, torch::Device device=torch::kCPU)</td></tr>
 <tr class="memitem:a070352fa8a61974f56c78842780bb735" id="r_a070352fa8a61974f56c78842780bb735"><td class="memItemLeft" align="right" valign="top"><a id="a070352fa8a61974f56c78842780bb735" name="a070352fa8a61974f56c78842780bb735"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>MD</b> (RealType dt, RealType cutoff, RealType margin, const <a class="el" href="class_atoms.html">Atoms</a> &amp;atoms, torch::Device device=torch::kCPU)</td></tr>
-<tr class="memitem:a35a5f5a9269718bf961c09855643c5e4" id="r_a35a5f5a9269718bf961c09855643c5e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a35a5f5a9269718bf961c09855643c5e4">NVE</a> (const RealType tsim, const RealType temp, const IntType step, const bool is_save=false, const std::string output_path=&quot;./data/saved_structure.xyz&quot;)</td></tr>
-<tr class="memdesc:a35a5f5a9269718bf961c09855643c5e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVEシミュレーションの実行  <br /></td></tr>
-<tr class="memitem:aa5a59a448ef7b541c43d0bb6b3ef24b5" id="r_aa5a59a448ef7b541c43d0bb6b3ef24b5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa5a59a448ef7b541c43d0bb6b3ef24b5">NVE</a> (const RealType tsim, const RealType temp, const std::string log, const bool is_save=false, const std::string output_path=&quot;./data/saved_structure.xyz&quot;)</td></tr>
-<tr class="memdesc:aa5a59a448ef7b541c43d0bb6b3ef24b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVEシミュレーションの実行  <br /></td></tr>
-<tr class="memitem:a44185d444dac3e7b49b80b8802a7dbd8" id="r_a44185d444dac3e7b49b80b8802a7dbd8"><td class="memTemplParams" colspan="2">template&lt;typename ThermostatType&gt; </td></tr>
-<tr class="memitem:a44185d444dac3e7b49b80b8802a7dbd8 template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a44185d444dac3e7b49b80b8802a7dbd8">NVT</a> (const RealType tsim, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const IntType step, const bool is_save=false, const std::string output_path=&quot;./data/saved_structure.xyz&quot;)</td></tr>
-<tr class="memdesc:a44185d444dac3e7b49b80b8802a7dbd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVTシミュレーションの実行  <br /></td></tr>
-<tr class="memitem:a772fcf37d4088cc22e6bdaed51526ada" id="r_a772fcf37d4088cc22e6bdaed51526ada"><td class="memTemplParams" colspan="2">template&lt;typename ThermostatType&gt; </td></tr>
-<tr class="memitem:a772fcf37d4088cc22e6bdaed51526ada template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a772fcf37d4088cc22e6bdaed51526ada">NVT</a> (const RealType tsim, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const std::string log, const bool is_save=false, const std::string output_path=&quot;./data/saved_structure.xyz&quot;)</td></tr>
-<tr class="memdesc:a772fcf37d4088cc22e6bdaed51526ada"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVTシミュレーションの実行  <br /></td></tr>
-<tr class="memitem:a5429cc4ab935423b3b3370f5b9a3b663" id="r_a5429cc4ab935423b3b3370f5b9a3b663"><td class="memTemplParams" colspan="2">template&lt;typename ThermostatType&gt; </td></tr>
-<tr class="memitem:a5429cc4ab935423b3b3370f5b9a3b663 template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5429cc4ab935423b3b3370f5b9a3b663">NVT_anneal</a> (const RealType cooling_rate, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const RealType targ_temp, const IntType step, const bool is_save=false, const std::string output_path=&quot;./data/saved_structure.xyz&quot;)</td></tr>
-<tr class="memdesc:a5429cc4ab935423b3b3370f5b9a3b663"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVTシミュレーションの実行  <br /></td></tr>
-<tr class="memitem:a6de34c4032e2d9386f602df9bb4ae909" id="r_a6de34c4032e2d9386f602df9bb4ae909"><td class="memTemplParams" colspan="2">template&lt;typename ThermostatType&gt; </td></tr>
-<tr class="memitem:a6de34c4032e2d9386f602df9bb4ae909 template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6de34c4032e2d9386f602df9bb4ae909">NVT_anneal</a> (const RealType cooling_rate, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const RealType targ_temp, const std::string log, const bool is_save=false, const std::string output_path=&quot;./data/saved_structure.xyz&quot;)</td></tr>
-<tr class="memdesc:a6de34c4032e2d9386f602df9bb4ae909"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVTシミュレーションの実行  <br /></td></tr>
+<tr class="memitem:aa4dd0dee4177dbd3aa4d4822a75f4dd2" id="r_aa4dd0dee4177dbd3aa4d4822a75f4dd2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa4dd0dee4177dbd3aa4d4822a75f4dd2">NVE</a> (const RealType tsim, const RealType temp, const IntType step, const bool is_save=false)</td></tr>
+<tr class="memdesc:aa4dd0dee4177dbd3aa4d4822a75f4dd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVEシミュレーションの実行  <br /></td></tr>
+<tr class="memitem:a2404fb9fb08468012a7f77d2be670384" id="r_a2404fb9fb08468012a7f77d2be670384"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2404fb9fb08468012a7f77d2be670384">NVE</a> (const RealType tsim, const RealType temp, const std::string log, const bool is_save=false)</td></tr>
+<tr class="memdesc:a2404fb9fb08468012a7f77d2be670384"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVEシミュレーションの実行  <br /></td></tr>
+<tr class="memitem:aac5ee6f4ba6c99850f897938f0c0f250" id="r_aac5ee6f4ba6c99850f897938f0c0f250"><td class="memTemplParams" colspan="2">template&lt;typename ThermostatType&gt; </td></tr>
+<tr class="memitem:aac5ee6f4ba6c99850f897938f0c0f250 template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aac5ee6f4ba6c99850f897938f0c0f250">NVT</a> (const RealType tsim, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const IntType step, const bool is_save=false)</td></tr>
+<tr class="memdesc:aac5ee6f4ba6c99850f897938f0c0f250"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVTシミュレーションの実行  <br /></td></tr>
+<tr class="memitem:afe9a8490e417c8d2b0d48e4cd7fb270e" id="r_afe9a8490e417c8d2b0d48e4cd7fb270e"><td class="memTemplParams" colspan="2">template&lt;typename ThermostatType&gt; </td></tr>
+<tr class="memitem:afe9a8490e417c8d2b0d48e4cd7fb270e template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afe9a8490e417c8d2b0d48e4cd7fb270e">NVT</a> (const RealType tsim, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const std::string log, const bool is_save=false)</td></tr>
+<tr class="memdesc:afe9a8490e417c8d2b0d48e4cd7fb270e"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVTシミュレーションの実行  <br /></td></tr>
+<tr class="memitem:a2a4fb81d47a79daa5f9720653d2191ec" id="r_a2a4fb81d47a79daa5f9720653d2191ec"><td class="memTemplParams" colspan="2">template&lt;typename ThermostatType&gt; </td></tr>
+<tr class="memitem:a2a4fb81d47a79daa5f9720653d2191ec template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2a4fb81d47a79daa5f9720653d2191ec">NVT_anneal</a> (const RealType cooling_rate, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const RealType targ_temp, const IntType step, const bool is_save=false)</td></tr>
+<tr class="memdesc:a2a4fb81d47a79daa5f9720653d2191ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVTシミュレーションの実行  <br /></td></tr>
+<tr class="memitem:ab308171f95a9e365f40a141751d43a38" id="r_ab308171f95a9e365f40a141751d43a38"><td class="memTemplParams" colspan="2">template&lt;typename ThermostatType&gt; </td></tr>
+<tr class="memitem:ab308171f95a9e365f40a141751d43a38 template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab308171f95a9e365f40a141751d43a38">NVT_anneal</a> (const RealType cooling_rate, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const RealType targ_temp, const std::string log, const bool is_save=false)</td></tr>
+<tr class="memdesc:ab308171f95a9e365f40a141751d43a38"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVTシミュレーションの実行  <br /></td></tr>
 <tr class="memitem:a742944afd53fe9c56b914e9e0b876efc" id="r_a742944afd53fe9c56b914e9e0b876efc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a742944afd53fe9c56b914e9e0b876efc">save_atoms</a> (const std::string &amp;save_path)</td></tr>
 <tr class="memdesc:a742944afd53fe9c56b914e9e0b876efc"><td class="mdescLeft">&#160;</td><td class="mdescRight">現在の系を保存  <br /></td></tr>
 <tr class="memitem:a777940384dcac29808cf39d7b64d6c35" id="r_a777940384dcac29808cf39d7b64d6c35"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a777940384dcac29808cf39d7b64d6c35">save_unwrapped_atoms</a> (const std::string &amp;save_path)</td></tr>
@@ -129,6 +129,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>reset_box</b> ()</td>
 <tr class="memitem:aa8648c6bf65ffed0911e45b6d67d3dd4" id="r_aa8648c6bf65ffed0911e45b6d67d3dd4"><td class="memItemLeft" align="right" valign="top"><a id="aa8648c6bf65ffed0911e45b6d67d3dd4" name="aa8648c6bf65ffed0911e45b6d67d3dd4"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>set_traj_path</b> (const std::string &amp;path)</td></tr>
 <tr class="memdesc:aa8648c6bf65ffed0911e45b6d67d3dd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">trajectoryファイルの保存先を変更 <br /></td></tr>
+<tr class="memitem:a402bbce162a73988df2b19235bacdad9" id="r_a402bbce162a73988df2b19235bacdad9"><td class="memItemLeft" align="right" valign="top"><a id="a402bbce162a73988df2b19235bacdad9" name="a402bbce162a73988df2b19235bacdad9"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>load_atoms</b> (const std::string &amp;path)</td></tr>
+<tr class="memdesc:a402bbce162a73988df2b19235bacdad9"><td class="mdescLeft">&#160;</td><td class="mdescRight">系の読み込み <br /></td></tr>
 <tr class="memitem:aa50dba7457ba0c289c981bdfeb86c6bf" id="r_aa50dba7457ba0c289c981bdfeb86c6bf"><td class="memItemLeft" align="right" valign="top"><a id="aa50dba7457ba0c289c981bdfeb86c6bf" name="aa50dba7457ba0c289c981bdfeb86c6bf"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>NVE_LJ</b> (const RealType tsim, const RealType temp, const IntType step, const bool is_save=false, const std::string output_path=&quot;./data/saved_structure.xyz&quot;)</td></tr>
 <tr class="memitem:a94ae9382d23a61ac34fe913012669f23" id="r_a94ae9382d23a61ac34fe913012669f23"><td class="memTemplParams" colspan="2"><a id="a94ae9382d23a61ac34fe913012669f23" name="a94ae9382d23a61ac34fe913012669f23"></a>
@@ -139,8 +142,8 @@ template&lt;typename ThermostatType&gt; </td></tr>
 <tr class="memitem:adc3213eb5b1288580ca20b48e986f34a template"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><b>NVT_LJ</b> (const RealType tsim, ThermostatType &amp;<a class="el" href="class_thermostat.html">Thermostat</a>, const IntType step, const bool is_save=false, const std::string output_path=&quot;./data/saved_structure.xyz&quot;)</td></tr>
 </table>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="a35a5f5a9269718bf961c09855643c5e4" name="a35a5f5a9269718bf961c09855643c5e4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a35a5f5a9269718bf961c09855643c5e4">&#9670;&#160;</a></span>NVE() <span class="overload">[1/2]</span></h2>
+<a id="aa4dd0dee4177dbd3aa4d4822a75f4dd2" name="aa4dd0dee4177dbd3aa4d4822a75f4dd2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4dd0dee4177dbd3aa4d4822a75f4dd2">&#9670;&#160;</a></span>NVE() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -163,12 +166,7 @@ template&lt;typename ThermostatType&gt; </td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string</td>          <td class="paramname"><span class="paramname"><em>output_path</em></span><span class="paramdefsep"> = </span><span class="paramdefval">&quot;./data/saved_structure.xyz&quot;</span>&#160;)</td>
+          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -180,15 +178,14 @@ template&lt;typename ThermostatType&gt; </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">temp</td><td>初期温度 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">step</td><td>何ステップごとに出力するか </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">outputpath</td><td>シミュレーション終了後の構造を保存するパス </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="aa5a59a448ef7b541c43d0bb6b3ef24b5" name="aa5a59a448ef7b541c43d0bb6b3ef24b5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa5a59a448ef7b541c43d0bb6b3ef24b5">&#9670;&#160;</a></span>NVE() <span class="overload">[2/2]</span></h2>
+<a id="a2404fb9fb08468012a7f77d2be670384" name="a2404fb9fb08468012a7f77d2be670384"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2404fb9fb08468012a7f77d2be670384">&#9670;&#160;</a></span>NVE() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -211,12 +208,7 @@ template&lt;typename ThermostatType&gt; </td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string</td>          <td class="paramname"><span class="paramname"><em>output_path</em></span><span class="paramdefsep"> = </span><span class="paramdefval">&quot;./data/saved_structure.xyz&quot;</span>&#160;)</td>
+          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -228,15 +220,14 @@ template&lt;typename ThermostatType&gt; </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">temp</td><td>初期温度 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">log</td><td>その他の保存方法（現在はlogスケールのみ） </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">outputpath</td><td>シミュレーション終了後の構造を保存するパス </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="a44185d444dac3e7b49b80b8802a7dbd8" name="a44185d444dac3e7b49b80b8802a7dbd8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a44185d444dac3e7b49b80b8802a7dbd8">&#9670;&#160;</a></span>NVT() <span class="overload">[1/2]</span></h2>
+<a id="aac5ee6f4ba6c99850f897938f0c0f250" name="aac5ee6f4ba6c99850f897938f0c0f250"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac5ee6f4ba6c99850f897938f0c0f250">&#9670;&#160;</a></span>NVT() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -261,12 +252,7 @@ template&lt;typename ThermostatType&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string</td>          <td class="paramname"><span class="paramname"><em>output_path</em></span><span class="paramdefsep"> = </span><span class="paramdefval">&quot;./data/saved_structure.xyz&quot;</span>&#160;)</td>
+          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -278,8 +264,7 @@ template&lt;typename ThermostatType&gt; </div>
     <tr><td class="paramdir">[in]</td><td class="paramname">tsim</td><td>シミュレーション時間 (fs) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname"><a class="el" href="class_thermostat.html">Thermostat</a></td><td>熱浴 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">step</td><td>何ステップごとに出力するか </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">output_path</td><td>シミュレーション終了後の構造を保存するパス</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか</td></tr>
   </table>
   </dd>
 </dl>
@@ -287,8 +272,8 @@ template&lt;typename ThermostatType&gt; </div>
 
 </div>
 </div>
-<a id="a772fcf37d4088cc22e6bdaed51526ada" name="a772fcf37d4088cc22e6bdaed51526ada"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a772fcf37d4088cc22e6bdaed51526ada">&#9670;&#160;</a></span>NVT() <span class="overload">[2/2]</span></h2>
+<a id="afe9a8490e417c8d2b0d48e4cd7fb270e" name="afe9a8490e417c8d2b0d48e4cd7fb270e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe9a8490e417c8d2b0d48e4cd7fb270e">&#9670;&#160;</a></span>NVT() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -313,12 +298,7 @@ template&lt;typename ThermostatType&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string</td>          <td class="paramname"><span class="paramname"><em>output_path</em></span><span class="paramdefsep"> = </span><span class="paramdefval">&quot;./data/saved_structure.xyz&quot;</span>&#160;)</td>
+          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -330,8 +310,7 @@ template&lt;typename ThermostatType&gt; </div>
     <tr><td class="paramdir">[in]</td><td class="paramname">tsim</td><td>シミュレーション時間 (fs) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname"><a class="el" href="class_thermostat.html">Thermostat</a></td><td>熱浴 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">log</td><td>その他の保存方法（現在はlogスケールのみ） </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">output_path</td><td>シミュレーション終了後の構造を保存するパス</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか</td></tr>
   </table>
   </dd>
 </dl>
@@ -339,8 +318,8 @@ template&lt;typename ThermostatType&gt; </div>
 
 </div>
 </div>
-<a id="a5429cc4ab935423b3b3370f5b9a3b663" name="a5429cc4ab935423b3b3370f5b9a3b663"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5429cc4ab935423b3b3370f5b9a3b663">&#9670;&#160;</a></span>NVT_anneal() <span class="overload">[1/2]</span></h2>
+<a id="a2a4fb81d47a79daa5f9720653d2191ec" name="a2a4fb81d47a79daa5f9720653d2191ec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a4fb81d47a79daa5f9720653d2191ec">&#9670;&#160;</a></span>NVT_anneal() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -370,12 +349,7 @@ template&lt;typename ThermostatType&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string</td>          <td class="paramname"><span class="paramname"><em>output_path</em></span><span class="paramdefsep"> = </span><span class="paramdefval">&quot;./data/saved_structure.xyz&quot;</span>&#160;)</td>
+          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -388,17 +362,16 @@ template&lt;typename ThermostatType&gt; </div>
     <tr><td class="paramdir">[in]</td><td class="paramname"><a class="el" href="class_thermostat.html">Thermostat</a></td><td>熱浴 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">targ_temp</td><td>目標温度 (K) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">step</td><td>何ステップごとに出力するか </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">output_path</td><td>シミュレーション終了後の構造を保存するパス</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>熱浴に、あらかじめ目標温度を設定しておいてください。 </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>熱浴に、あらかじめ初期温度を設定しておいてください。 </dd></dl>
 
 </div>
 </div>
-<a id="a6de34c4032e2d9386f602df9bb4ae909" name="a6de34c4032e2d9386f602df9bb4ae909"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6de34c4032e2d9386f602df9bb4ae909">&#9670;&#160;</a></span>NVT_anneal() <span class="overload">[2/2]</span></h2>
+<a id="ab308171f95a9e365f40a141751d43a38" name="ab308171f95a9e365f40a141751d43a38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab308171f95a9e365f40a141751d43a38">&#9670;&#160;</a></span>NVT_anneal() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -428,12 +401,7 @@ template&lt;typename ThermostatType&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string</td>          <td class="paramname"><span class="paramname"><em>output_path</em></span><span class="paramdefsep"> = </span><span class="paramdefval">&quot;./data/saved_structure.xyz&quot;</span>&#160;)</td>
+          <td class="paramtype">const bool</td>          <td class="paramname"><span class="paramname"><em>is_save</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -446,12 +414,11 @@ template&lt;typename ThermostatType&gt; </div>
     <tr><td class="paramdir">[in]</td><td class="paramname"><a class="el" href="class_thermostat.html">Thermostat</a></td><td>熱浴 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">targ_temp</td><td>目標温度 (K) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">log</td><td>その他の保存方法（現在はlogスケールのみ） </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">output_path</td><td>シミュレーション終了後の構造を保存するパス</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">is_save</td><td>各ステップごとにtrajectoryを保存するか</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>熱浴に、あらかじめ目標温度を設定しておいてください。 </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>熱浴に、あらかじめ初期温度を設定しておいてください。 </dd></dl>
 
 </div>
 </div>
