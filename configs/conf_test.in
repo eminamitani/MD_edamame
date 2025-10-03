@@ -1,0 +1,7 @@
+SET T_0 = 3300
+SET T_targ = 3000
+SET dt = 5e-3
+SET data_path = ./data/initial_structure.xyz
+
+ANNEAL --start_temp=${T_0} --target_temp=${T_targ} --initial_structure=${data_path} >> annealed
+NVT --temp=${T_0} --initial_structure=@annealed

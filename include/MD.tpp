@@ -61,7 +61,7 @@ MD::MD(RealType dt, RealType cutoff, RealType margin, const Atoms& atoms, torch:
 //保存用の関数をラムダ式で渡しているだけ
 
 //NVEシミュレーション
-void MD::NVE(const RealType tsim, const RealType temp, const IntType step, const bool is_save, const std::string output_path) {
+void MD::NVE(const RealType tsim, const RealType temp, const IntType step, const bool is_save) {
     init_temp(temp);
 
     //ログの見出しを出力しておく
@@ -92,12 +92,10 @@ void MD::NVE(const RealType tsim, const RealType temp, const IntType step, const
             }
         });
     }
-
-    xyz::save_atoms(output_path, atoms_);
 }
 
 //NVEシミュレーション（logスケールで保存）
-void MD::NVE(const RealType tsim, const RealType temp, const std::string log, const bool is_save, const std::string output_path) {
+void MD::NVE(const RealType tsim, const RealType temp, const std::string log, const bool is_save) {
     if(log != "log") {
         return; 
     }
@@ -137,13 +135,11 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
             }
         });
     }
-
-    xyz::save_atoms(output_path, atoms_);
 }
 
 //NVTシミュレーション
 template <typename ThermostatType>
-void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step, const bool is_save, const std::string output_path) {
+void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step, const bool is_save) {
     init_temp(Thermostat.temp().template item<RealType>());
     Thermostat.setup(atoms_);
 
@@ -174,13 +170,11 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step
             }
         });
     }
-
-    xyz::save_atoms(output_path, atoms_);
 }
 
 //NVTシミュレーション（logスケールで保存）
 template <typename ThermostatType>
-void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save, const std::string output_path) {
+void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save) {
     if(log != "log") {
         return; 
     }
@@ -221,13 +215,12 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
             }
         });
     }
-
-    xyz::save_atoms(output_path, atoms_);
 }
 
 //温度を変化させながらシミュレーション
 template <typename ThermostatType>
-void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const IntType step, const bool is_save, const std::string output_path) {
+void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const IntType step, const bool is_save) {
+    init_temp(Thermostat.temp().template item<RealType>());
     Thermostat.setup(atoms_);
 
     //NLの作成
@@ -258,17 +251,16 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
             }
         });
     }
-
-    xyz::save_atoms(output_path, atoms_);
 }
 
 //NVTシミュレーション（logスケールで保存）
 template <typename ThermostatType>
-void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save, const std::string output_path) {
+void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save) {
     if(log != "log") {
         return; 
     }
 
+    init_temp(Thermostat.temp().template item<RealType>());
     Thermostat.setup(atoms_);
 
     //NLの作成
@@ -305,8 +297,6 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
             }
         });
     }
-
-    xyz::save_atoms(output_path, atoms_);
 }
 
 //=====シミュレーション（1ステップ）=====
@@ -369,7 +359,7 @@ void MD::NVT_loop(const RealType tsim, ThermostatType& Thermostat, OutputAction 
 
 template <typename OutputAction, typename ThermostatType>
 void MD::NVT_anneal_loop(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, OutputAction output_action) {
-    const RealType dT = cooling_rate * dt_real_;                                           //1ステップあたりの下降温度
+    const RealType dT = cooling_rate * dt_real_;                                         //1ステップあたりの下降温度
     IntType quench_steps = static_cast<IntType>(std::ceil((temp_ - targ_temp) / dT));    //冷却ステップ数
     quench_steps += t_;
 

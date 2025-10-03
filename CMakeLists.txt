@@ -18,7 +18,8 @@ find_package(Torch REQUIRED PATHS ${Torch_DIR})
 
 # ソースファイルのリスト
 set(SOURCES
-    src/main_MQ.cpp
+    src/main.cpp
+#    src/main_NVT_MSD.cpp
 #    src/main_LJ_NoseHoover.cpp
 #    src/simulate_LJ_NHC_torch_4.cpp
     src/NoseHooverThermostat.cpp
@@ -29,6 +30,7 @@ set(SOURCES
     src/xyz.cpp
     src/inference.cpp
     src/LJ.cpp
+    src/ConfigReader.cpp
 )
 
 # 実行ファイルを作成
@@ -42,3 +44,5 @@ target_link_libraries(MD_MLP ${TORCH_LIBRARIES})
 # 必須：位置独立コード（libtorchで必要）
 set_property(TARGET MD_MLP PROPERTY POSITION_INDEPENDENT_CODE ON)
 #set_property(TARGET MD_LJ PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+# cmake -D CMAKE_CUDA_COMPILER=/usr/local/cuda-12.2/bin/nvcc ..

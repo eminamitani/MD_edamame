@@ -31,18 +31,16 @@ class MD{
          * @param[in] temp 初期温度
          * @param[in] step 何ステップごとに出力するか
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
          */
-        void NVE(const RealType tsim, const RealType temp, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
+        void NVE(const RealType tsim, const RealType temp, const IntType step, const bool is_save = false);
         /**
          * @brief NVEシミュレーションの実行
          * @param[in] tsim シミュレーション時間 (fs)
          * @param[in] temp 初期温度
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] outputpath シミュレーション終了後の構造を保存するパス
          */
-        void NVE(const RealType tsim, const RealType temp, const std::string log, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
+        void NVE(const RealType tsim, const RealType temp, const std::string log, const bool is_save = false);
 
         //一定温度のシミュレーション
         /**
@@ -54,12 +52,11 @@ class MD{
          * @param[in] Thermostat 熱浴
          * @param[in] step 何ステップごとに出力するか
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
          * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
          */
         template <typename ThermostatType>
-        void NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");            
+        void NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step, const bool is_save = false);            
         /**
          * @brief NVTシミュレーションの実行
          * 
@@ -69,13 +66,12 @@ class MD{
          * @param[in] Thermostat 熱浴
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
          * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>
-        void NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");        
+        void NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save = false);        
 
         //温度変化をさせるシミュレーション
         /**
@@ -88,13 +84,12 @@ class MD{
          * @param[in] targ_temp 目標温度 (K)
          * @param[in] step 何ステップごとに出力するか
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
          * @note 熱浴に、あらかじめ初期温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>
-        void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
+        void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const IntType step, const bool is_save = false);
         /**
          * @brief NVTシミュレーションの実行
          * 
@@ -105,13 +100,12 @@ class MD{
          * @param[in] targ_temp 目標温度 (K)
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] output_path シミュレーション終了後の構造を保存するパス
          * 
          * @note 熱浴に、あらかじめ初期温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>
-        void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
+        void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save = false);
 
         //原子の保存
         /**
@@ -141,6 +135,11 @@ class MD{
          * @brief trajectoryファイルの保存先を変更
          */
         void set_traj_path(const std::string& path);
+
+        /**
+         * @brief 系の読み込み
+         */
+        void load_atoms(const std::string& path);
 
         //テスト用
         void NVE_LJ(const RealType tsim, const RealType temp, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
