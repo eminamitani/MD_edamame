@@ -1,15 +1,24 @@
-#必須の変数の設定
+#=====必須の変数の設定=====
+#初期構造のパス
 SET initial_path = ./output_NS2_eq2.xyz
+#NNPモデルのパス
 SET model_path = ./models/deployed_model_Na2O-SiO2.pt
 
-#その他のシミュレーション変数の設定
-SET dt = 5e-3
-SET cutoff = 5.0;
-SET margin = 1.0;
+#=====その他のシミュレーション変数の設定=====
+#タイムステップ
+SET dt = 0.5
+#カットオフ距離
+SET cutoff = 5.0
+#隣接リストのマージン
+SET margin = 1.0
 
-SET trajectory_path = ./NS2_T3000_2.xyz
-SET thermostat_type = Bussi
-SET tau = 1.0
+#トラジェクトリの保存先
+SET trajectory_path = ./NS2_T3000_3.xyz
+#熱浴の種類（Bussi or NoseHoover）
+SET thermostat_type = NoseHoover
+#熱浴の設定
+#SET chain_length = 1
+#SET tau = 1.0
 
 #その他の変数の設定
 SET T_0 = 3300
@@ -22,5 +31,9 @@ SET output_path = ./NS2_T3000_simulated.xyz
 
 #行うシミュレーションの設定
 ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_0} --target_temp=${T_targ} --output_method=log --trajectory=false
+
 NVT --duration=${t_eq} --temp=${T_targ} --output_method=log --trajectory=false
+
+RESET_STEP
+
 NVT --duration=${t_sim} --temp=${T_targ} --output_method=log --trajectory=true >> ${output_path}

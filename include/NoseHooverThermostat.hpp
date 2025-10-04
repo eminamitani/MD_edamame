@@ -66,12 +66,12 @@ class NoseHooverThermostat {
          * @param[in] target_temp 目標温度
          * 目標温度は0次元のtorch::Tensor
          */
-        void set_temp(const torch::Tensor& temp) { target_tmp_ = temp; }
+        void set_temp(const torch::Tensor& temp);
         /**
          * @brief 目標温度を設定します。
          * @param[in] target_temp 目標温度
          */
-        void set_temp(const RealType& temp) { target_tmp_ = torch::tensor(temp, device_); }
+        void set_temp(const RealType& temp);
 
         //初期化
         /**

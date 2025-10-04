@@ -117,6 +117,13 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
     int counter = 5;
     auto checker = 1e-3 * std::pow(logbin, counter);
 
+    double current_time = static_cast<double>(dt_real_) * static_cast<double>(t_);
+
+    //現在の時間に合わせてcheckerを更新
+    while (checker <= current_time) {
+        checker *= logbin;
+    }
+
     if(is_save) {
         NVE_loop(tsim, temp, [this, &checker, logbin]() {
             if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) {
@@ -196,6 +203,13 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
     const auto logbin = std::pow(10.0, 1.0 / 9);
     int counter = 5;
     auto checker = 1e-3 * std::pow(logbin, counter);
+
+    double current_time = static_cast<double>(dt_real_) * static_cast<double>(t_);
+
+    //現在の時間に合わせてcheckerを更新
+    while (checker <= current_time) {
+        checker *= logbin;
+    }
 
     if(is_save) {
         NVT_loop(tsim, Thermostat, [this, &checker, logbin]() {
@@ -278,6 +292,13 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
     const auto logbin = std::pow(10.0, 1.0 / 9);
     int counter = 5;
     auto checker = 1e-3 * std::pow(logbin, counter);
+
+    double current_time = static_cast<double>(dt_real_) * static_cast<double>(t_);
+
+    //現在の時間に合わせてcheckerを更新
+    while (checker <= current_time) {
+        checker *= logbin;
+    }
 
     if(is_save) {
         NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, [this, &checker, logbin]() {

@@ -41,17 +41,18 @@ int main(){
     md.set_traj_path(traj_path);
 
     //シミュレーションの実行（冷却）
-    md.NVT_anneal(cooling_rate, bussi_thermostat, T_targ, "log", false, "./output_NS2_T1000_quench.xyz");
+    md.NVT_anneal(cooling_rate, bussi_thermostat, T_targ, "log", false);
     std::cout << "冷却完了" << std::endl;
     md.reset_step();
 
     //シミュレーションの実行（緩和）
-    md.NVT(t_eq, bussi_thermostat, "log", false, "./output_NS2_T1000_eq.xyz");
+    md.NVT(t_eq, bussi_thermostat, "log", false);
     std::cout << "緩和完了" << std::endl;
     md.reset_step();
 
     //シミュレーションの実行（production run）
-    md.NVT(t_sim, bussi_thermostat, "log", true, "./output_NS2_T1000_production.xyz");
+    md.NVT(t_sim, bussi_thermostat, "log", true);
+    md.save_atoms("./NS2_T3000_1.xyz");
 
     //終了時刻を記録
     auto end = std::chrono::steady_clock::now();

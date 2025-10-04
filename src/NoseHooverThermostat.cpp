@@ -157,3 +157,25 @@ void NoseHooverThermostat::NHCM(torch::Tensor& atoms_velocities, const torch::Te
 
     atoms_velocities *= scale;
 }
+
+void NoseHooverThermostat::set_temp(const RealType& temp) {
+    target_tmp_ = torch::tensor(temp, device_);
+
+    // 目標温度の変更に合わせて熱浴の質量を再計算する
+    if (dof_.item<IntType>() > 0) { // dofが初期化されているか確認
+        torch::Tensor tau2 = torch::pow(tau_, 2);
+        masses_.fill_(boltzmann_constant_ * target_tmp_ * tau2);
+        masses_[0] *= dof_;
+    }
+}
+
+void NoseHooverThermostat::set_temp(const torch::Tensor& temp) {
+    target_tmp_ = temp;
+
+    // 目標温度の変更に合わせて熱浴の質量を再計算する
+    if (dof_.item<IntType>() > 0) { // dofが初期化されているか確認
+        torch::Tensor tau2 = torch::pow(tau_, 2);
+        masses_.fill_(boltzmann_constant_ * target_tmp_ * tau2);
+        masses_[0] *= dof_;
+    }
+}

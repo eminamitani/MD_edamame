@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <chrono>
 
 #include "Command.hpp"
 #include "ConfigReader.hpp"
@@ -40,12 +41,24 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             const std::string output_method = args.at("output_method");
             const bool is_save_traj = args.count("trajectory") ? string_to_bool(args.at("trajectory")) : false;
 
+            std::cout << "=====シミュレーション設定=====" << std::endl;
+            std::cout << "シミュレーション時間: " << tsim << " fs\n"
+                      << "初期温度: " << temp << " K\n"
+                      << "保存間隔: " << output_method << "\n"
+                      << "トラジェクトリの保存: " << is_save_traj << std::endl;
+
             if (output_method == "log") {
                 md.NVE(tsim, temp, output_method, is_save_traj);
             }
             else {
                 const IntType step = std::stoi(output_method);
                 md.NVE(tsim, temp, step, is_save_traj);
+            }
+
+            const std::string& save_path = cmd.redirect_target;
+            if (!save_path.empty()) {
+                md.save_atoms(save_path);
+                std::cout << save_path << "に構造を保存しました。" << std::endl;
             }
         }
         else if (cmd.name == "NVT") {
@@ -56,12 +69,24 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
 
             thermostat.set_temp(temp);
 
+            std::cout << "=====シミュレーション設定=====" << std::endl;
+            std::cout << "シミュレーション時間: " << tsim << " fs\n"
+                      << "温度: " << temp << " K\n"
+                      << "保存間隔: " << output_method << "\n"
+                      << "トラジェクトリの保存: " << is_save_traj << std::endl;
+
             if (output_method == "log") {
                 md.NVT(tsim, thermostat, output_method, is_save_traj);
             }
             else {
                 const IntType step = std::stoi(output_method);
                 md.NVT(temp, thermostat, step, is_save_traj);
+            }
+
+            const std::string& save_path = cmd.redirect_target;
+            if (!save_path.empty()) {
+                md.save_atoms(save_path);
+                std::cout << save_path << "に構造を保存しました。" << std::endl;
             }
         }
         else if (cmd.name == "ANNEAL") {
@@ -71,6 +96,13 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             const std::string output_method = args.at("output_method");
             const bool is_save_traj = args.count("trajectory") ? string_to_bool(args.at("trajectory")) : false;
 
+            std::cout << "=====シミュレーション設定=====" << std::endl;
+            std::cout << "冷却速度: " << cooling_rate << " K/fs\n"
+                      << "初期温度: " << initial_temp << " K\n"
+                      << "目標温度: " << target_temp << "K\n"
+                      << "保存間隔: " << output_method << "\n"
+                      << "トラジェクトリの保存: " << is_save_traj << std::endl;
+
             thermostat.set_temp(initial_temp);
 
             if (output_method == "log") {
@@ -79,6 +111,12 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             else {
                 const IntType step = std::stoi(output_method);
                 md.NVT_anneal(cooling_rate, thermostat, target_temp, step, is_save_traj);
+            }
+
+            const std::string& save_path = cmd.redirect_target;
+            if (!save_path.empty()) {
+                md.save_atoms(save_path);
+                std::cout << save_path << "に構造を保存しました。" << std::endl;
             }
         }
         else {
@@ -93,6 +131,9 @@ int main(int argc, char* argv[]) {
         std::cerr << "設定ファイルを指定してください。" << std::endl;
         return 1;
     }
+
+    //現在時刻を記録
+    auto start = std::chrono::steady_clock::now();
 
     try {
         //設定の読み込み
@@ -116,6 +157,8 @@ int main(int argc, char* argv[]) {
 
         MD md(dt, cutoff, margin, initial_path, model_path, device);
 
+        md.set_traj_path(trajectory_path);
+
         if (thermostat_type == "Bussi") {
             const RealType tau = variables.count("tau") ? std::stod(variables.at("tau")) : 1.0;
             BussiThermostat thermostat(0.0, tau, device);
@@ -125,7 +168,7 @@ int main(int argc, char* argv[]) {
 
         if (thermostat_type == "NoseHoover") {
             const IntType chain_length = variables.count("chain_length") ? std::stoi(variables.at("chain_length")) : 1;
-            const RealType tau = variables.count("tau") ? std::stod(variables.at("tau")) : 1.0;
+            const RealType tau = variables.count("tau") ? std::stod(variables.at("tau")) : dt * 1e+3;
             NoseHooverThermostat thermostat(chain_length, 0.0, tau, device);
 
             execute_command(commands, md, thermostat);
@@ -136,6 +179,14 @@ int main(int argc, char* argv[]) {
         std::cerr << "エラー: " << e.what() << std::endl;
         return 1;
     }
+
+    //終了時刻を記録
+    auto end = std::chrono::steady_clock::now();
+
+    //実行時間を計算
+    double elapsed_s = std::chrono::duration<double>(end - start).count();
+
+    std::cout << "処理にかかった時間：" << elapsed_s << "s" << std::endl;
 
     return 0;
 }
