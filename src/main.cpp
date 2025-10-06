@@ -19,7 +19,7 @@ bool string_to_bool(const std::string& s) {
 template <typename ThermostatType>
 void execute_command(std::vector<Command> commands, MD& md, ThermostatType& thermostat) {
     for (const auto& cmd : commands) {
-        std::cout << "コマンド: " << cmd.name << "を実行します。" << std::endl;
+        std::cout << "=====" << cmd.name << "=====" << std::endl;
         auto args = cmd.args;
         if (cmd.name == "SAVE") {
             std::string output_path = args.count("output") ? args.at("output") : "saved_structure.xyz";
@@ -158,6 +158,18 @@ int main(int argc, char* argv[]) {
         MD md(dt, cutoff, margin, initial_path, model_path, device);
 
         md.set_traj_path(trajectory_path);
+
+        //設定を出力
+        std::cout << "=====全体の設定=====" << std::endl 
+                  << "初期構造: " << initial_path << std::endl
+                  << "モデル: " << model_path << std::endl
+                  << "タイムステップ: " << dt << std::endl
+                  << "カットオフ距離: " << cutoff << " Å" << std::endl
+                  << "マージン: " << margin << " Å" << std::endl
+                  << "熱浴の種類: " << thermostat_type << std::endl;
+
+        std::cout << "=====出力設定=====" << std::endl
+                  << "トラジェクトリの保存先: " << trajectory_path << std::endl;
 
         if (thermostat_type == "Bussi") {
             const RealType tau = variables.count("tau") ? std::stod(variables.at("tau")) : 1.0;

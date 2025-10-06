@@ -13,21 +13,21 @@ SET cutoff = 5.0
 SET margin = 1.0
 
 #トラジェクトリの保存先
-SET trajectory_path = ./NS2_T3000_3.xyz
+SET trajectory_path = ./NS2_T2500_1.xyz
+
 #熱浴の種類（Bussi or NoseHoover）
-SET thermostat_type = NoseHoover
+SET thermostat_type = Bussi
 #熱浴の設定
 #SET chain_length = 1
 #SET tau = 1.0
+SET tau = 1.0
 
 #その他の変数の設定
 SET T_0 = 3300
-SET T_targ = 3000
+SET T_targ = 2500
 SET cooling_rate = 1.0
 SET t_eq = 2e+4
-SET t_sim = 5e+5
-
-SET output_path = ./NS2_T3000_simulated.xyz
+SET t_sim = 1e+6
 
 #行うシミュレーションの設定
 ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_0} --target_temp=${T_targ} --output_method=log --trajectory=false
@@ -36,4 +36,4 @@ NVT --duration=${t_eq} --temp=${T_targ} --output_method=log --trajectory=false
 
 RESET_STEP
 
-NVT --duration=${t_sim} --temp=${T_targ} --output_method=log --trajectory=true >> ${output_path}
+NVT --duration=${t_sim} --temp=${T_targ} --output_method=log --trajectory=true >> NS2_T3000_simulated.xyz

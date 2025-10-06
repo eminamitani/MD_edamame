@@ -101,7 +101,7 @@ void ConfigReader::parse(const std::string& filename) {
         std::size_t redirect_pos = command_part.find(">>");
         if (redirect_pos != std::string::npos) {
             command_part = trim(current_line.substr(0, redirect_pos));
-            cmd.redirect_target = trim(current_line.substr(redirect_pos + 2));
+            cmd.redirect_target = substitute_vars(trim(current_line.substr(redirect_pos + 2)), variables_);
         }
 
         //コマンドを空白で分割
