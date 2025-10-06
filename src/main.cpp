@@ -17,7 +17,7 @@ bool string_to_bool(const std::string& s) {
 
 //コマンドの実行
 template <typename ThermostatType>
-void execute_command(std::vector<Command> commands, MD& md, ThermostatType& thermostat) {
+void execute_command(std::vector<Command> commands, MD& md, ThermostatType& thermostat, const RealType& dt) {
     for (const auto& cmd : commands) {
         std::cout << "=====" << cmd.name << "=====" << std::endl;
         auto args = cmd.args;
@@ -43,6 +43,7 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
 
             std::cout << "=====シミュレーション設定=====" << std::endl;
             std::cout << "シミュレーション時間: " << tsim << " fs\n"
+                      << "ステップ数" << tsim / dt << "\n"
                       << "初期温度: " << temp << " K\n"
                       << "保存間隔: " << output_method << "\n"
                       << "トラジェクトリの保存: " << is_save_traj << std::endl;
@@ -71,6 +72,7 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
 
             std::cout << "=====シミュレーション設定=====" << std::endl;
             std::cout << "シミュレーション時間: " << tsim << " fs\n"
+                      << "ステップ数" << tsim / dt << "\n"
                       << "温度: " << temp << " K\n"
                       << "保存間隔: " << output_method << "\n"
                       << "トラジェクトリの保存: " << is_save_traj << std::endl;
@@ -100,6 +102,7 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             std::cout << "冷却速度: " << cooling_rate << " K/fs\n"
                       << "初期温度: " << initial_temp << " K\n"
                       << "目標温度: " << target_temp << "K\n"
+                      << "ステップ数" << static_cast<IntType>((initial_temp - target_temp) / (cooling_rate * dt)) << "\n"
                       << "保存間隔: " << output_method << "\n"
                       << "トラジェクトリの保存: " << is_save_traj << std::endl;
 
@@ -175,7 +178,7 @@ int main(int argc, char* argv[]) {
             const RealType tau = variables.count("tau") ? std::stod(variables.at("tau")) : 1.0;
             BussiThermostat thermostat(0.0, tau, device);
 
-            execute_command(commands, md, thermostat);
+            execute_command(commands, md, thermostat, dt);
         }
 
         if (thermostat_type == "NoseHoover") {
@@ -183,7 +186,7 @@ int main(int argc, char* argv[]) {
             const RealType tau = variables.count("tau") ? std::stod(variables.at("tau")) : dt * 1e+3;
             NoseHooverThermostat thermostat(chain_length, 0.0, tau, device);
 
-            execute_command(commands, md, thermostat);
+            execute_command(commands, md, thermostat, dt);
         }
     }
 
