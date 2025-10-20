@@ -1,0 +1,41 @@
+#=====必須の変数の設定=====
+#初期構造のパス
+SET initial_path = ./output_NS3_eq2.xyz
+#NNPモデルのパス
+SET model_path = ./models/deployed_model_Na2O-SiO2.pt
+
+#=====その他のシミュレーション変数の設定=====
+#タイムステップ
+SET dt = 0.5
+#カットオフ距離
+SET cutoff = 5.0
+#隣接リストのマージン
+SET margin = 1.0
+
+#トラジェクトリの保存先
+SET trajectory_path = ./NS3_T3000_0.xyz
+
+#熱浴の種類（Bussi or NoseHoover）
+SET thermostat_type = NoseHoover
+#熱浴の設定
+SET chain_length = 1
+SET tau = 50
+
+#その他の変数の設定
+SET T_0 = 300
+SET T_targ = 2000
+SET T_targ_1 = 2500
+SET T_targ_2 = 3000
+SET cooling_rate = 2e-3
+SET t_eq = 2e+4
+SET t_sim = 5e+5
+
+#行うシミュレーションの設定
+INIT_TEMP --temp=${T_0}
+
+
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_0} --target_temp=${T_targ} --output_method=log --trajectory=false >> NS3_T2000_ANNEALED.xyz
+
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_targ} --target_temp=${T_targ_1} --output_method=log --trajectory=false >> NS3_T2500_ANNEALED.xyz
+
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_targ_1} --target_temp=${T_targ_2} --output_method=log --trajectory=false >> NS3_T3000_ANNEALED.xyz

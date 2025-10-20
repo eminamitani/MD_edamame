@@ -1,0 +1,134 @@
+#=====必須の変数の設定=====
+#初期構造のパス
+SET initial_path = ./output_NS2_eq2.xyz
+#NNPモデルのパス
+SET model_path = ./models/deployed_model_Na2O-SiO2.pt
+
+#=====その他のシミュレーション変数の設定=====
+#タイムステップ
+SET dt = 0.5
+#カットオフ距離
+SET cutoff = 5.0
+#隣接リストのマージン
+SET margin = 1.0
+
+#熱浴の種類（Bussi or NoseHoover）
+SET thermostat_type = NoseHoover
+#熱浴の設定
+#SET chain_length = 1
+#SET tau = 1.0
+SET tau = 50
+
+#その他の変数の設定
+SET cooling_rate = 2e-3
+SET t_eq = 2e+5
+
+SET T_0 = 3300
+SET T_1 = 3250
+SET T_2 = 3200
+SET T_3 = 3150
+SET T_4 = 3100
+SET T_5 = 3050
+SET T_6 = 3000
+SET T_7 = 2950
+SET T_8 = 2900
+SET T_9 = 2850
+SET T_10 = 2800
+SET T_11 = 2750
+SET T_12 = 2700
+SET T_13 = 2650
+SET T_14 = 2600
+SET T_15 = 2550
+SET T_16 = 2500
+SET T_17 = 2450
+SET T_18 = 2400
+SET T_19 = 2350
+SET T_20 = 2300
+SET T_21 = 2250
+SET T_22 = 2200
+SET T_23 = 2150
+SET T_24 = 2100
+SET T_25 = 2050
+SET T_26 = 2000
+SET T_27 = 1950
+SET T_28 = 1900
+SET T_29 = 1850
+SET T_30 = 1800
+SET T_31 = 1750
+SET T_32 = 1700
+SET T_33 = 1650
+SET T_34 = 1600
+SET T_35 = 1550
+SET T_36 = 1500
+SET T_37 = 1450
+SET T_38 = 1400
+SET T_39 = 1350
+SET T_40 = 1300
+SET T_41 = 1250
+SET T_42 = 1200
+SET T_43 = 1150
+SET T_44 = 1100
+SET T_45 = 1050
+SET T_46 = 1000
+SET T_47 = 300
+
+SET output_path = NS2_mq.xyz
+
+#行うシミュレーションの設定
+INIT_TEMP --temp=${T_0}
+
+NVT --duration=${t_eq} --temp=${T_0} --output_method=log --trajectory=false
+
+RESET_STEP
+
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_0} --target_temp=${T_1} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T3250.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_1} --target_temp=${T_2} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T3200.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_2} --target_temp=${T_3} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T3150.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_3} --target_temp=${T_4} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T3100.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_4} --target_temp=${T_5} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T3050.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_5} --target_temp=${T_6} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T3000.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_6} --target_temp=${T_7} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2950.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_7} --target_temp=${T_8} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2900.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_8} --target_temp=${T_9} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2850.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_9} --target_temp=${T_10} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2800.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_10} --target_temp=${T_11} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2750.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_11} --target_temp=${T_12} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2700.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_12} --target_temp=${T_13} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2650.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_13} --target_temp=${T_14} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2600.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_14} --target_temp=${T_15} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2550.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_15} --target_temp=${T_16} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2500.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_16} --target_temp=${T_17} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2450.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_17} --target_temp=${T_18} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2400.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_18} --target_temp=${T_19} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2350.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_19} --target_temp=${T_20} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2300.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_20} --target_temp=${T_21} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2250.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_21} --target_temp=${T_22} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2200.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_22} --target_temp=${T_23} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2150.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_23} --target_temp=${T_24} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2100.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_24} --target_temp=${T_25} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2050.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_25} --target_temp=${T_26} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T2000.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_26} --target_temp=${T_27} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1950.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_27} --target_temp=${T_28} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1900.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_28} --target_temp=${T_29} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1850.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_29} --target_temp=${T_30} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1800.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_30} --target_temp=${T_31} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1750.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_31} --target_temp=${T_32} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1700.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_32} --target_temp=${T_33} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1650.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_33} --target_temp=${T_34} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1600.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_34} --target_temp=${T_35} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1550.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_35} --target_temp=${T_36} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1500.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_36} --target_temp=${T_37} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1450.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_37} --target_temp=${T_38} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1400.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_38} --target_temp=${T_39} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1350.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_39} --target_temp=${T_40} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1300.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_40} --target_temp=${T_41} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1250.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_41} --target_temp=${T_42} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1200.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_42} --target_temp=${T_43} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1150.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_43} --target_temp=${T_44} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1100.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_44} --target_temp=${T_45} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1050.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_45} --target_temp=${T_46} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T1000.xyz
+ANNEAL --cooling_rate=${cooling_rate} --initial_temp=${T_46} --target_temp=${T_47} --output_method=log --trajectory=false >> ./output/NS2/NS2_ANNEALED_T300.xyz
+
+RESET_STEP
+
+NVT --duration=${t_eq} --temp=${T_47} --output_method=log --trajectory=false >> ${output_path}
