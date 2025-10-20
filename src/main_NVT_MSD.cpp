@@ -17,7 +17,7 @@ int main(){
 
     const RealType T_0 = 3300.0;            //初期温度 (K)
     const RealType T_targ = 1000.0;         //目標温度 (K)
-    const RealType cooling_rate = 1.0;      //冷却速度 (K/fs)
+    const RealType cooling_rate = 1.0e-3;      //冷却速度 (K/fs)
     const RealType t_eq = 2e+4;             //緩和時間 (fs)
     const RealType t_sim = 5e+5;            //production runの時間 (fs)
 
@@ -39,6 +39,8 @@ int main(){
 
     //trajectoryファイルの出力先を変更
     md.set_traj_path(traj_path);
+
+    md.init_temp(T_0);
 
     //シミュレーションの実行（冷却）
     md.NVT_anneal(cooling_rate, bussi_thermostat, T_targ, "log", false);

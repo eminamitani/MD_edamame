@@ -35,15 +35,19 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             md.reset_step();
             std::cout << "ステップ数を0に初期化しました。" << std::endl;
         }
+        else if (cmd.name == "INIT_TEMP") {
+            const RealType temp = std::stod(args.at("temp"));
+            md.init_temp(temp);
+            std::cout << "温度を" << temp << " Kで初期化しました。" << std::endl;
+        }
         else if (cmd.name == "NVE") {
             const RealType tsim = std::stod(args.at("duration"));
             const RealType temp = std::stod(args.at("temp"));
             const std::string output_method = args.at("output_method");
             const bool is_save_traj = args.count("trajectory") ? string_to_bool(args.at("trajectory")) : false;
 
-            std::cout << "=====シミュレーション設定=====" << std::endl;
             std::cout << "シミュレーション時間: " << tsim << " fs\n"
-                      << "ステップ数" << tsim / dt << "\n"
+                      << "ステップ数: " << tsim / dt << "\n"
                       << "初期温度: " << temp << " K\n"
                       << "保存間隔: " << output_method << "\n"
                       << "トラジェクトリの保存: " << is_save_traj << std::endl;
@@ -70,9 +74,8 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
 
             thermostat.set_temp(temp);
 
-            std::cout << "=====シミュレーション設定=====" << std::endl;
             std::cout << "シミュレーション時間: " << tsim << " fs\n"
-                      << "ステップ数" << tsim / dt << "\n"
+                      << "ステップ数: " << tsim / dt << "\n"
                       << "温度: " << temp << " K\n"
                       << "保存間隔: " << output_method << "\n"
                       << "トラジェクトリの保存: " << is_save_traj << std::endl;
@@ -98,11 +101,10 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             const std::string output_method = args.at("output_method");
             const bool is_save_traj = args.count("trajectory") ? string_to_bool(args.at("trajectory")) : false;
 
-            std::cout << "=====シミュレーション設定=====" << std::endl;
             std::cout << "冷却速度: " << cooling_rate << " K/fs\n"
                       << "初期温度: " << initial_temp << " K\n"
-                      << "目標温度: " << target_temp << "K\n"
-                      << "ステップ数" << static_cast<IntType>((initial_temp - target_temp) / (cooling_rate * dt)) << "\n"
+                      << "目標温度: " << target_temp << " K\n"
+                      << "ステップ数: " << static_cast<IntType>((initial_temp - target_temp) / (cooling_rate * dt)) << "\n"
                       << "保存間隔: " << output_method << "\n"
                       << "トラジェクトリの保存: " << is_save_traj << std::endl;
 
@@ -166,7 +168,7 @@ int main(int argc, char* argv[]) {
         std::cout << "=====全体の設定=====" << std::endl 
                   << "初期構造: " << initial_path << std::endl
                   << "モデル: " << model_path << std::endl
-                  << "タイムステップ: " << dt << std::endl
+                  << "タイムステップ: " << dt << " fs" << std::endl
                   << "カットオフ距離: " << cutoff << " Å" << std::endl
                   << "マージン: " << margin << " Å" << std::endl
                   << "熱浴の種類: " << thermostat_type << std::endl;

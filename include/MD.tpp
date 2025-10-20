@@ -62,8 +62,6 @@ MD::MD(RealType dt, RealType cutoff, RealType margin, const Atoms& atoms, torch:
 
 //NVEシミュレーション
 void MD::NVE(const RealType tsim, const RealType temp, const IntType step, const bool is_save) {
-    init_temp(temp);
-
     //ログの見出しを出力しておく
     std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)" << std::endl;
 
@@ -78,7 +76,7 @@ void MD::NVE(const RealType tsim, const RealType temp, const IntType step, const
 
     if(is_save) {
         NVE_loop(tsim, temp, [this, step]() {
-            if(t_ % step == 0) {
+            if(t_ % step == 0) [[unlikely]] {
                 print_energies();
 
                 xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
@@ -87,7 +85,7 @@ void MD::NVE(const RealType tsim, const RealType temp, const IntType step, const
     }
     else {
         NVE_loop(tsim, temp, [this, step]() {
-            if(t_ % step == 0) {
+            if(t_ % step == 0) [[unlikely]] {
                 print_energies();
             }
         });
@@ -99,7 +97,6 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
     if(log != "log") {
         return; 
     }
-    init_temp(temp);
 
     //ログの見出しを出力しておく
     std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)" << std::endl;
@@ -126,7 +123,7 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
 
     if(is_save) {
         NVE_loop(tsim, temp, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) {
+            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
                 checker *= logbin;
                 print_energies();
 
@@ -136,7 +133,7 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
     }
     else {
         NVE_loop(tsim, temp, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) {
+            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
                 checker *= logbin;
                 print_energies();
             }
@@ -147,7 +144,6 @@ void MD::NVE(const RealType tsim, const RealType temp, const std::string log, co
 //NVTシミュレーション
 template <typename ThermostatType>
 void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step, const bool is_save) {
-    init_temp(Thermostat.temp().template item<RealType>());
     Thermostat.setup(atoms_);
 
     //ログの見出しを出力しておく
@@ -163,7 +159,7 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step
 
     if(is_save) {
         NVT_loop(tsim, Thermostat, [this, step]() {
-            if(t_ % step == 0) {
+            if(t_ % step == 0) [[unlikely]] {
                 print_energies();
 
                 xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
@@ -172,7 +168,7 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step
     }
     else {
         NVT_loop(tsim, Thermostat, [this, step]() {
-            if(t_ % step == 0) {
+            if(t_ % step == 0) [[unlikely]] {
                 print_energies();
             }
         });
@@ -186,7 +182,6 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
         return; 
     }
 
-    init_temp(Thermostat.temp().template item<RealType>());
     Thermostat.setup(atoms_);
 
     //ログの見出しを出力しておく
@@ -213,7 +208,7 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
 
     if(is_save) {
         NVT_loop(tsim, Thermostat, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) {
+            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
                 checker *= logbin;
                 print_energies();
 
@@ -223,7 +218,7 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
     }
     else {
         NVT_loop(tsim, Thermostat, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) {
+            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
                 checker *= logbin;
                 print_energies();
             }
@@ -234,7 +229,6 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
 //温度を変化させながらシミュレーション
 template <typename ThermostatType>
 void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const IntType step, const bool is_save) {
-    init_temp(Thermostat.temp().template item<RealType>());
     Thermostat.setup(atoms_);
 
     //NLの作成
@@ -251,7 +245,7 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
 
     if(is_save) {
         NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, [this, step]() {
-            if(t_ % step == 0) {
+            if(t_ % step == 0) [[unlikely]] {
                 print_energies();
 
                 xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
@@ -260,7 +254,7 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
     }
     else {
         NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, [this, step]() {
-            if(t_ % step == 0) {
+            if(t_ % step == 0) [[unlikely]] {
                 print_energies();
             }
         });
@@ -274,7 +268,6 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
         return; 
     }
 
-    init_temp(Thermostat.temp().template item<RealType>());
     Thermostat.setup(atoms_);
 
     //NLの作成
@@ -302,7 +295,7 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
 
     if(is_save) {
         NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) {
+            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
                 checker *= logbin;
                 print_energies();
 
@@ -312,7 +305,7 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
     }
     else {
         NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) {
+            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
                 checker *= logbin;
                 print_energies();
             }
@@ -380,8 +373,14 @@ void MD::NVT_loop(const RealType tsim, ThermostatType& Thermostat, OutputAction 
 
 template <typename OutputAction, typename ThermostatType>
 void MD::NVT_anneal_loop(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, OutputAction output_action) {
-    const RealType dT = cooling_rate * dt_real_;                                         //1ステップあたりの下降温度
+    RealType dT = cooling_rate * dt_real_;                                         //1ステップあたりの下降温度
     IntType quench_steps = static_cast<IntType>(std::ceil((temp_ - targ_temp) / dT));    //冷却ステップ数
+
+    if (temp_ < targ_temp) {
+        quench_steps = -quench_steps;
+        dT = -dT;
+    }
+
     quench_steps += t_;
 
     //冷却
@@ -487,8 +486,6 @@ void MD::step_LJ(torch::Tensor& box, BussiThermostat& Thermostat) {
 
 template <typename OutputAction>
 void MD::NVE_loop_LJ(const RealType tsim, const RealType temp, OutputAction output_action) {
-    init_temp(temp);
-
     torch::TensorOptions options = torch::TensorOptions().device(device_);
 
     //ログの見出しを出力しておく

@@ -122,7 +122,13 @@ class MD{
          */
         void save_unwrapped_atoms(const std::string& save_path);
 
-        //時間のリセット（桁溢れ対策）
+        /**
+         * @brief 温度をもとに、原子の速度を初期化
+         * 
+         * @param[in] initial_temp 温度 (K)
+         */
+        void init_temp(const RealType initial_temp);                     //原子の速度（温度）の初期化
+
         /**
          * @brief ステップ数を0に戻す
          */
@@ -157,12 +163,6 @@ class MD{
          * @brief 経過時間・運動エネルギー・ポテンシャルエネルギー・全エネルギー・温度を出力
          */
         void print_energies();                                          //結果の出力
-        /**
-         * @brief 温度をもとに、原子の速度を初期化
-         * 
-         * @param[in] initial_temp 温度 (K)
-         */
-        void init_temp(const RealType initial_temp);                     //原子の速度（温度）の初期化
 
         /**
          * @brief NVEシミュレーションを1ステップ行う
