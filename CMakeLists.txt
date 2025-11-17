@@ -8,23 +8,26 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # include ディレクトリをインクルードパスに追加
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-# libtorchの場所
-set(LIBTORCH_PATH "/home/nozawa/mambaforge/envs/md/lib/python3.13/site-packages/torch")
+# libtorch via conda
+set(LIBTORCH_PATH "$ENV{CONDA_PREFIX}/lib/python3.13/site-packages/torch")
 set(Torch_DIR "${LIBTORCH_PATH}/share/cmake/Torch")
 find_package(Torch REQUIRED PATHS ${Torch_DIR})
 
-# cuDNNの設定
-set(CUDNN_ROOT "/home/nozawa/mambaforge/envs/md/") 
-find_path(CUDNN_INCLUDE_DIR cudnn.h PATHS ${CUDNN_ROOT}/include /usr/include)
-find_library(CUDNN_LIBRARY cudnn PATHS ${CUDNN_ROOT}/lib64 ${CUDNN_ROOT}/lib /usr/lib/x86_64-linux-gnu)
+# cuDNN via conda
+set(CUDNN_ROOT "$ENV{CONDA_PREFIX}")
+
+find_path(CUDNN_INCLUDE_DIR cudnn.h
+          PATHS ${CUDNN_ROOT}/include)
+
+find_library(CUDNN_LIBRARY cudnn
+             PATHS ${CUDNN_ROOT}/lib ${CUDNN_ROOT}/lib64)
 
 if (CUDNN_INCLUDE_DIR AND CUDNN_LIBRARY)
     message(STATUS "Found cuDNN: ${CUDNN_LIBRARY}")
-    include_directories(${CUDNN_INCLUDE_DIR})
-    add_definitions(-DUSE_CUDNN=1)
+    set(USE_CUDNN 1)
 else()
     message(WARNING "cuDNN not found. Compiling without cuDNN support.")
-    add_definitions(-DUSE_CUDNN=0)
+    set(USE_CUDNN 0)
 endif()
 
 # ソースファイルのリスト
@@ -58,4 +61,3 @@ set_target_properties(MD_MLP PROPERTIES CUDA_ARCHITECTURES 89)
 
 set_property(TARGET MD_MLP PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-# cmake -D CMAKE_CUDA_COMPILER=/usr/local/cuda-12.2/bin/nvcc ..

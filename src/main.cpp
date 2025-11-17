@@ -85,7 +85,7 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             }
             else {
                 const IntType step = std::stoi(output_method);
-                md.NVT(temp, thermostat, step, is_save_traj);
+                md.NVT(tsim, thermostat, step, is_save_traj);
             }
 
             const std::string& save_path = cmd.redirect_target;
