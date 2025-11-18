@@ -147,6 +147,13 @@ class MD{
          */
         void load_atoms(const std::string& path);
 
+        /**
+         * @brief 現在の運動温度を取得
+         */
+        RealType kinetic_temperature() const {
+            return atoms_.temperature().item<RealType>();
+        }
+
         //テスト用
         void NVE_LJ(const RealType tsim, const RealType temp, const IntType step, const bool is_save = false, const std::string output_path = "./data/saved_structure.xyz");
 

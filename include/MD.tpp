@@ -229,6 +229,9 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string 
 //温度を変化させながらシミュレーション
 template <typename ThermostatType>
 void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const IntType step, const bool is_save) {
+    // ★ ここで現在の運動温度を取得して temp_ に同期
+    temp_ = atoms_.temperature().item<RealType>();
+    Thermostat.set_temp(temp_);
     Thermostat.setup(atoms_);
 
     //NLの作成
@@ -384,6 +387,8 @@ void MD::NVT_anneal_loop(const RealType cooling_rate, ThermostatType& Thermostat
     quench_steps += t_;
 
     //冷却
+    //ANNEALの場合はここでtemp_による制御が入っているから、
+    //最初の段階でtemp_を初期化する必要があった。
     while(t_ < quench_steps){
         temp_ -= dT;
         Thermostat.set_temp(temp_);

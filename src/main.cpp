@@ -100,15 +100,38 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             const RealType target_temp = std::stod(args.at("target_temp"));
             const std::string output_method = args.at("output_method");
             const bool is_save_traj = args.count("trajectory") ? string_to_bool(args.at("trajectory")) : false;
+            
+            //ANNEALで想定している機能（melt-quench）を考えると、その前に行った平衡化の速度ベクトルを引き継ぐのが自然かもしれない。
+            //ただ、設定した温度に速度場を揃えたい場合もありそう。なので、与えた初期速度で再初期化するか、
+            //速度場を引き継ぐかをオプションで選べるようにする。
+
+            //TODO: ANNEALとNVTは将来的に統合する。T_initial, T_finalを常に与え、同じ温度であれば温度更新なし、異なる温度であれば温度更新ありのようにする。
+            
+            // ★ 追加：速度を再初期化するかどうか
+            const bool reinit_vel = args.count("reinit_vel") ? string_to_bool(args.at("reinit_vel")) : false;
+            
+            RealType current_T;
+
+            if (reinit_vel) {
+                // Maxwell-Boltzmann から再サンプル
+                md.init_temp(initial_temp);
+                current_T = initial_temp;
+            } else {
+                // 速度場をそのまま引き継ぎ、実際の運動温度を取得
+                current_T = md.kinetic_temperature();  // 上で追加したアクセサ
+            }
 
             std::cout << "冷却速度: " << cooling_rate << " K/fs\n"
-                      << "初期温度: " << initial_temp << " K\n"
-                      << "目標温度: " << target_temp << " K\n"
-                      << "ステップ数: " << static_cast<IntType>((initial_temp - target_temp) / (cooling_rate * dt)) << "\n"
-                      << "保存間隔: " << output_method << "\n"
-                      << "トラジェクトリの保存: " << is_save_traj << std::endl;
+                    << "（名目）初期温度: " << initial_temp << " K\n"
+                    << "（実際）初期温度: " << current_T << " K\n"
+                    << "目標温度: " << target_temp << " K\n"
+                    << "ステップ数(実際): "
+                    << static_cast<IntType>((current_T - target_temp) / (cooling_rate * dt)) << "\n"
+                    << "速度再初期化: " << std::boolalpha << reinit_vel << "\n"
+                    << "保存間隔: " << output_method << "\n"
+                    << "トラジェクトリの保存: " << is_save_traj << std::endl;
 
-            thermostat.set_temp(initial_temp);
+            thermostat.set_temp(current_T);
 
             if (output_method == "log") {
                 md.NVT_anneal(cooling_rate, thermostat, target_temp, output_method, is_save_traj);
