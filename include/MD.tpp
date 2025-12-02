@@ -177,52 +177,74 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step
 
 //NVTシミュレーション（logスケールで保存）
 template <typename ThermostatType>
-void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save) {
-    if(log != "log") {
-        return; 
+void MD::NVT(const RealType tsim,
+             ThermostatType& Thermostat,
+             const std::string log,
+             const bool is_save,
+             const RealType log_r)   // ★ 追加：サンプリング倍率 r
+{
+    if (log != "log") {
+        return;
     }
 
+    // 熱浴のセットアップ
     Thermostat.setup(atoms_);
 
-    //ログの見出しを出力しておく
-    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
+    // ログの見出しを出力
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、"
+                 "total energy (eV)、temperature (K)" << std::endl;
 
-    //NLの作成
+    // NL の作成
     NL_.generate(atoms_);
 
-    //モデルの推論
+    // モデルの推論
     inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+
+    // 初期状態を 1 回出力
     print_energies();
-    if (is_save) xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-
-    const auto logbin = std::pow(10.0, 1.0 / 9);
-    int counter = 5;
-    auto checker = 1e-3 * std::pow(logbin, counter);
-
-    double current_time = static_cast<double>(dt_real_) * static_cast<double>(t_);
-
-    //現在の時間に合わせてcheckerを更新
-    while (checker <= current_time) {
-        checker *= logbin;
+    if (is_save) {
+        xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
     }
 
-    if(is_save) {
-        NVT_loop(tsim, Thermostat, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
-                checker *= logbin;
-                print_energies();
+    // ---- 対数サンプリング設定 ----
+    const double r = static_cast<double>(log_r);  // 例: 1.02 など
 
-                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-            }
-        });
+    // 現在の時間
+    double current_time =
+        static_cast<double>(dt_real_) * static_cast<double>(t_);
+
+    // 次に出力する時間
+    double next_time;
+    if (current_time > 0.0) {
+        // 既に進んでいるなら、その時刻の r 倍から開始
+        next_time = current_time * r;
+    } else {
+        // t = 0 スタートの場合は 1 step 先から
+        next_time = static_cast<double>(dt_real_);
     }
-    else {
-        NVT_loop(tsim, Thermostat, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
-                checker *= logbin;
-                print_energies();
-            }
-        });
+    // ---- 対数サンプリング設定ここまで ----
+
+    if (is_save) {
+        NVT_loop(tsim, Thermostat,
+                 [this, &next_time, r]() {
+                     double t_curr =
+                         static_cast<double>(dt_real_) * static_cast<double>(t_);
+                     if (t_curr >= next_time) [[unlikely]] {
+                         next_time *= r;
+                         print_energies();
+                         xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+                     }
+                 });
+    } else {
+        NVT_loop(tsim, Thermostat,
+                 [this, &next_time, r]() {
+                     double t_curr =
+                         static_cast<double>(dt_real_) * static_cast<double>(t_);
+                     if (t_curr >= next_time) [[unlikely]] {
+                         next_time *= r;
+                         print_energies();
+                     }
+                 });
     }
 }
 
@@ -266,55 +288,77 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
 
 //NVTシミュレーション（logスケールで保存）
 template <typename ThermostatType>
-void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save) {
-    if(log != "log") {
-        return; 
+void MD::NVT_anneal(const RealType cooling_rate,
+                    ThermostatType& Thermostat,
+                    const RealType targ_temp,
+                    const std::string log,
+                    const bool is_save,
+                    const RealType log_r)   // ★ 追加：サンプリング倍率 r
+{
+    if (log != "log") {
+        return;
     }
-    // ★ ここで現在の運動温度を取得して temp_ に同期
+
+    // 現在の運動温度を取得して temp_ に同期
     temp_ = atoms_.temperature().item<RealType>();
     Thermostat.set_temp(temp_);
     Thermostat.setup(atoms_);
 
-    //NLの作成
+    // NL の作成
     NL_.generate(atoms_);
 
-    //モデルの推論
+    // MLP 推論
     inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
 
-    //ログの見出しを出力しておく
-    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、total energy (eV)、temperature (K)" << std::endl;
+    // ログヘッダ
+    std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、"
+                 "total energy (eV)、temperature (K)" << std::endl;
 
+    // 初期出力
     print_energies();
-    if (is_save) xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-
-    const auto logbin = std::pow(10.0, 1.0 / 9);
-    int counter = 5;
-    auto checker = 1e-3 * std::pow(logbin, counter);
-
-    double current_time = static_cast<double>(dt_real_) * static_cast<double>(t_);
-
-    //現在の時間に合わせてcheckerを更新
-    while (checker <= current_time) {
-        checker *= logbin;
+    if (is_save) {
+        xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
     }
 
-    if(is_save) {
-        NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
-                checker *= logbin;
-                print_energies();
+    // ---- 対数サンプリング設定 ----
+    const double r = static_cast<double>(log_r);  // ★ 引数から倍率を取得
 
-                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-            }
-        });
+    double current_time =
+        static_cast<double>(dt_real_) * static_cast<double>(t_);
+
+    double next_time;
+    if (current_time > 0.0) {
+        next_time = current_time * r;
+    } else {
+        next_time = static_cast<double>(dt_real_);  // 1 step 後
     }
-    else {
-        NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, [this, &checker, logbin]() {
-            if(static_cast<double>(dt_real_) * static_cast<double>(t_) > checker) [[unlikely]] {
-                checker *= logbin;
-                print_energies();
+    // ---- 対数サンプリング設定ここまで ----
+
+    if (is_save) {
+        NVT_anneal_loop(
+            cooling_rate, Thermostat, targ_temp,
+            [this, &next_time, r]() {
+                double t_curr =
+                    static_cast<double>(dt_real_) * static_cast<double>(t_);
+                if (t_curr >= next_time) [[unlikely]] {
+                    next_time *= r;
+                    print_energies();
+                    xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+                }
             }
-        });
+        );
+    } else {
+        NVT_anneal_loop(
+            cooling_rate, Thermostat, targ_temp,
+            [this, &next_time, r]() {
+                double t_curr =
+                    static_cast<double>(dt_real_) * static_cast<double>(t_);
+                if (t_curr >= next_time) [[unlikely]] {
+                    next_time *= r;
+                    print_energies();
+                }
+            }
+        );
     }
 }
 

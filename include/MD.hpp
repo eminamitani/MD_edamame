@@ -66,12 +66,13 @@ class MD{
          * @param[in] Thermostat 熱浴
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
+         * @param[in] log_r ログスケールの倍率
          * 
          * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>
-        void NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save = false);        
+        void NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save = false,const RealType log_r = 1.02);        
 
         //温度変化をさせるシミュレーション
         /**
@@ -100,12 +101,13 @@ class MD{
          * @param[in] targ_temp 目標温度 (K)
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
+         * @param[in] log_r ログスケールの倍率
          * 
          * @note 熱浴に、あらかじめ初期温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>
-        void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save = false);
+        void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save = false,const RealType log_r = 1.02);
 
         //原子の保存
         /**
