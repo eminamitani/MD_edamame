@@ -72,13 +72,34 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             const std::string output_method = args.at("output_method");
             const bool is_save_traj = args.count("trajectory") ? string_to_bool(args.at("trajectory")) : false;
 
+            //初期温度設定（オプショナル。指定なしでは0Kで設定される）
+            RealType init_temp = 0.0;
+            bool do_init_temp = false;
+
+            if (args.count("init_temp")) {
+                init_temp = std::stod(args.at("init_temp"));
+                do_init_temp = true;
+            }
+
+            //熱浴の温度を設定
             thermostat.set_temp(temp);
+
+            // ★ init_temp が指定されているときだけ速度初期化
+            if (do_init_temp) {
+                md.init_temp(init_temp);
+            }
+            
 
             std::cout << "シミュレーション時間: " << tsim << " fs\n"
                       << "ステップ数: " << tsim / dt << "\n"
                       << "温度: " << temp << " K\n"
                       << "保存間隔: " << output_method << "\n"
                       << "トラジェクトリの保存: " << is_save_traj << std::endl;
+            
+            //debug
+            
+            std::cout << "初期運動エネルギー温度 = "
+                    << md.kinetic_temperature() << " K" << std::endl;
 
             if (output_method == "log") {
                 md.NVT(tsim, thermostat, output_method, is_save_traj);
