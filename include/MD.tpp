@@ -270,7 +270,9 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
     if(log != "log") {
         return; 
     }
-
+    // ★ ここで現在の運動温度を取得して temp_ に同期
+    temp_ = atoms_.temperature().item<RealType>();
+    Thermostat.set_temp(temp_);
     Thermostat.setup(atoms_);
 
     //NLの作成
