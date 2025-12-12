@@ -66,13 +66,14 @@ class MD{
          * @param[in] Thermostat 熱浴
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] log_r ログスケールの倍率
+         * @param[in] N_per_decade 1 decade あたりのサンプル数 N
+         * @param[in] M_boost 各点で連続保存するステップ数 M
          * 
          * @note 熱浴に、あらかじめ目標温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>
-        void NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save = false,const RealType log_r = 1.02);        
+        void NVT(const RealType tsim, ThermostatType& Thermostat, const std::string log, const bool is_save = false,const IntType N_per_decade = 5, const IntType M_boost = 10);        
 
         //温度変化をさせるシミュレーション
         /**
@@ -101,13 +102,14 @@ class MD{
          * @param[in] targ_temp 目標温度 (K)
          * @param[in] log その他の保存方法（現在はlogスケールのみ）
          * @param[in] is_save 各ステップごとにtrajectoryを保存するか
-         * @param[in] log_r ログスケールの倍率
+         * @param[in] N_per_decade 1 decade あたりのサンプル数 N
+         * @param[in] M_boost 各点で連続保存するステップ数 M
          * 
          * @note 熱浴に、あらかじめ初期温度を設定しておいてください。
          * 
          */
         template <typename ThermostatType>
-        void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save = false,const RealType log_r = 1.02);
+        void NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, const RealType targ_temp, const std::string log, const bool is_save = false,const IntType N_per_decade = 5, const IntType M_boost = 10);
 
         //原子の保存
         /**

@@ -175,13 +175,14 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step
     }
 }
 
-//NVTシミュレーション（logスケールで保存）
+// NVTシミュレーション（logスケールで保存 + 1 decade あたり N 点 + 各点で M ステップ連続保存）
 template <typename ThermostatType>
 void MD::NVT(const RealType tsim,
              ThermostatType& Thermostat,
              const std::string log,
              const bool is_save,
-             const RealType log_r)   // ★ 追加：サンプリング倍率 r
+             const IntType N_per_decade,   // ★追加：1 decade あたりのサンプル数 N
+             const IntType M_burst)        // ★追加：各サンプル点から連続 M ステップ保存/出力
 {
     if (log != "log") {
         return;
@@ -206,47 +207,58 @@ void MD::NVT(const RealType tsim,
         xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
     }
 
-    // ---- 対数サンプリング設定 ----
-    const double r = static_cast<double>(log_r);  // 例: 1.02 など
+    // ---- 対数サンプリング + バースト設定 ----
+    // 1 decade (= ×10) あたり N 点 → r = 10^(1/N)
+    const int N = (N_per_decade > 0) ? N_per_decade : 1;
+    const int M = (M_burst > 0) ? M_burst : 0;
+    const double r = std::pow(10.0, 1.0 / static_cast<double>(N));
 
-    // 現在の時間
-    double current_time =
-        static_cast<double>(dt_real_) * static_cast<double>(t_);
+    // 初期 decade は dt 起点：dt, dt*r, dt*r^2, ...
+    double next_time = static_cast<double>(dt_real_);
 
-    // 次に出力する時間
-    double next_time;
-    if (current_time > 0.0) {
-        // 既に進んでいるなら、その時刻の r 倍から開始
-        next_time = current_time * r;
-    } else {
-        // t = 0 スタートの場合は 1 step 先から
-        next_time = static_cast<double>(dt_real_);
-    }
-    // ---- 対数サンプリング設定ここまで ----
+    // バースト残り（到達ステップを含める）
+    int burst_left = 0;
+    // ---- ここまで ----
 
-    if (is_save) {
-        NVT_loop(tsim, Thermostat,
-                 [this, &next_time, r]() {
-                     double t_curr =
-                         static_cast<double>(dt_real_) * static_cast<double>(t_);
-                     if (t_curr >= next_time) [[unlikely]] {
-                         next_time *= r;
-                         print_energies();
-                         xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-                     }
-                 });
-    } else {
-        NVT_loop(tsim, Thermostat,
-                 [this, &next_time, r]() {
-                     double t_curr =
-                         static_cast<double>(dt_real_) * static_cast<double>(t_);
-                     if (t_curr >= next_time) [[unlikely]] {
-                         next_time *= r;
-                         print_energies();
-                     }
-                 });
-    }
+    // 1 ステップごとに呼ばれるコールバック
+    auto callback = [this, &next_time, r, &burst_left, M, is_save]() {
+        const double t_curr =
+            static_cast<double>(dt_real_) * static_cast<double>(t_);
+
+        // バースト中：毎ステップ出力（print + 必要なら保存）
+        if (burst_left > 0) {
+            print_energies();
+            if (is_save) {
+                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+            }
+            --burst_left;
+            return;
+        }
+
+        // バースト中でなければ、サンプル時刻に到達したか判定
+        if (t_curr >= next_time) [[unlikely]] {
+            // 取りこぼし対策：dt が粗くても next_time を t_curr より未来まで進める
+            while (t_curr >= next_time) {
+                next_time *= r;
+            }
+
+            // 到達ステップを含めて M ステップ分のバースト開始
+            burst_left = M;
+
+            // 到達ステップでも出力（M に含める）
+            if (burst_left > 0) {
+                print_energies();
+                if (is_save) {
+                    xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+                }
+                --burst_left;
+            }
+        }
+    };
+
+    NVT_loop(tsim, Thermostat, callback);
 }
+
 
 //温度を変化させながらシミュレーション
 template <typename ThermostatType>
@@ -286,14 +298,15 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
     }
 }
 
-//NVTシミュレーション（logスケールで保存）
+// 温度変化NVTシミュレーション（logスケールで保存 + 1 decade あたり N 点 + 各点で M ステップ連続保存）
 template <typename ThermostatType>
 void MD::NVT_anneal(const RealType cooling_rate,
                     ThermostatType& Thermostat,
                     const RealType targ_temp,
                     const std::string log,
                     const bool is_save,
-                    const RealType log_r)   // ★ 追加：サンプリング倍率 r
+                    const IntType N_per_decade,   // ★追加：1 decade あたりのサンプル数 N
+                    const IntType M_burst)        // ★追加：各サンプル点から連続 M ステップ保存/出力
 {
     if (log != "log") {
         return;
@@ -320,47 +333,58 @@ void MD::NVT_anneal(const RealType cooling_rate,
         xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
     }
 
-    // ---- 対数サンプリング設定 ----
-    const double r = static_cast<double>(log_r);  // ★ 引数から倍率を取得
+    // ---- 対数サンプリング + バースト設定 ----
+    // 1 decade (= ×10) あたり N 点 → r = 10^(1/N)
+    const int N = (N_per_decade > 0) ? N_per_decade : 1;
+    const int M = (M_burst > 0) ? M_burst : 0;
+    const double r = std::pow(10.0, 1.0 / static_cast<double>(N));
 
-    double current_time =
-        static_cast<double>(dt_real_) * static_cast<double>(t_);
+    // 初期 decade は dt 起点：dt, dt*r, dt*r^2, ...
+    double next_time = static_cast<double>(dt_real_);
 
-    double next_time;
-    if (current_time > 0.0) {
-        next_time = current_time * r;
-    } else {
-        next_time = static_cast<double>(dt_real_);  // 1 step 後
-    }
-    // ---- 対数サンプリング設定ここまで ----
+    // バースト残り（到達ステップを含める）
+    int burst_left = 0;
+    // ---- ここまで ----
 
-    if (is_save) {
-        NVT_anneal_loop(
-            cooling_rate, Thermostat, targ_temp,
-            [this, &next_time, r]() {
-                double t_curr =
-                    static_cast<double>(dt_real_) * static_cast<double>(t_);
-                if (t_curr >= next_time) [[unlikely]] {
-                    next_time *= r;
-                    print_energies();
+    // 1 ステップごとに呼ばれるコールバック
+    auto callback = [this, &next_time, r, &burst_left, M, is_save]() {
+        const double t_curr =
+            static_cast<double>(dt_real_) * static_cast<double>(t_);
+
+        // バースト中：毎ステップ出力（print + 必要なら保存）
+        if (burst_left > 0) {
+            print_energies();
+            if (is_save) {
+                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+            }
+            --burst_left;
+            return;
+        }
+
+        // バースト中でなければ、サンプル時刻に到達したか判定
+        if (t_curr >= next_time) [[unlikely]] {
+            // 取りこぼし対策：dt が粗くても next_time を t_curr より未来まで進める
+            while (t_curr >= next_time) {
+                next_time *= r;
+            }
+
+            // 到達ステップを含めて M ステップ分のバースト開始
+            burst_left = M;
+
+            // 到達ステップでも出力（M に含める）
+            if (burst_left > 0) {
+                print_energies();
+                if (is_save) {
                     xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
                 }
+                --burst_left;
             }
-        );
-    } else {
-        NVT_anneal_loop(
-            cooling_rate, Thermostat, targ_temp,
-            [this, &next_time, r]() {
-                double t_curr =
-                    static_cast<double>(dt_real_) * static_cast<double>(t_);
-                if (t_curr >= next_time) [[unlikely]] {
-                    next_time *= r;
-                    print_energies();
-                }
-            }
-        );
-    }
+        }
+    };
+
+    NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, callback);
 }
+
 
 //=====シミュレーション（1ステップ）=====
 //NVEの1ステップ

@@ -102,8 +102,9 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
                     << md.kinetic_temperature() << " K" << std::endl;
 
             if (output_method == "log") {
-                RealType r = args.count("log_r") ? std::stod(args.at("log_r")) : 1.02; // ★ default 1.02
-                md.NVT(tsim, thermostat, output_method, is_save_traj, r);
+                const IntType N = args.count("N_per_decade") ? std::stoi(args.at("N_per_decade")) : 5; // ★ default 5
+                const IntType M = args.count("M_boost") ? std::stoi(args.at("M_boost")) : 10;               // ★ default 10
+                md.NVT(tsim, thermostat, output_method, is_save_traj, N, M);
             }
             else {
                 const IntType step = std::stoi(output_method);
@@ -156,8 +157,9 @@ void execute_command(std::vector<Command> commands, MD& md, ThermostatType& ther
             thermostat.set_temp(current_T);
 
             if (output_method == "log") {
-                RealType r = args.count("log_r") ? std::stod(args.at("log_r")) : 1.02; // ★ default 1.02
-                md.NVT_anneal(cooling_rate, thermostat, target_temp, output_method, is_save_traj, r);
+                const IntType N = args.count("N_per_decade") ? std::stoi(args.at("N_per_decade")) : 5; // ★ default 5
+                const IntType M = args.count("M_boost") ? std::stoi(args.at("M_boost")) : 10;               // ★ default 10
+                md.NVT_anneal(cooling_rate, thermostat, target_temp, output_method, is_save_traj, N, M);
             }
             else {
                 const IntType step = std::stoi(output_method);
