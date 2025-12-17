@@ -175,14 +175,16 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step
     }
 }
 
-// NVTシミュレーション（logスケールで保存 + 1 decade あたり N 点 + 各点で M ステップ連続保存）
+// NVTシミュレーション（logスケールで保存 + 1 decade あたり N 点 + 各点で M ステップ連続保存, 連続保存時の間隔も指定できる）
+// decadeはステップ数で判定
 template <typename ThermostatType>
 void MD::NVT(const RealType tsim,
              ThermostatType& Thermostat,
              const std::string log,
              const bool is_save,
-             const IntType N_per_decade,   // ★追加：1 decade あたりのサンプル数 N
-             const IntType M_burst)        // ★追加：各サンプル点から連続 M ステップ保存/出力
+             const IntType N_per_decade,
+             const IntType M_burst,
+             const IntType interval_burst)
 {
     if (log != "log") {
         return;
@@ -201,63 +203,76 @@ void MD::NVT(const RealType tsim,
     // モデルの推論
     inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
 
-    // 初期状態を 1 回出力
+    // 初期状態を 1 回出力（run の t=0 に相当）
     print_energies();
     if (is_save) {
         xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
     }
 
-    // ---- 対数サンプリング + バースト設定 ----
-    // 1 decade (= ×10) あたり N 点 → r = 10^(1/N)
-    const int N = (N_per_decade > 0) ? N_per_decade : 1;
-    const int M = (M_burst > 0) ? M_burst : 0;
+    // ---- 対数サンプリング + バースト設定（run 相対ステップで管理） ----
+    const int N = (N_per_decade > 0) ? static_cast<int>(N_per_decade) : 1;
+    const int M = (M_burst > 0) ? static_cast<int>(M_burst) : 0;
+    const int interval = (interval_burst > 0) ? static_cast<int>(interval_burst) : 1;
     const double r = std::pow(10.0, 1.0 / static_cast<double>(N));
 
-    // 初期 decade は dt 起点：dt, dt*r, dt*r^2, ...
-    double next_time = static_cast<double>(dt_real_);
+    const IntType t0 = t_;                  // run 開始時の通算ステップ
+    IntType next_step_rel = static_cast<IntType>(1);  // 次のログ点（run 相対ステップ）
 
-    // バースト残り（到達ステップを含める）
-    int burst_left = 0;
-    // ---- ここまで ----
+    int burst_samples_left = 0; // 残りサンプル点数（M点）
+    int burst_wait = 0;         // 次の出力までの待ちステップ
 
-    // 1 ステップごとに呼ばれるコールバック
-    auto callback = [this, &next_time, r, &burst_left, M, is_save]() {
-        const double t_curr =
-            static_cast<double>(dt_real_) * static_cast<double>(t_);
+    auto callback = [this, r, t0, &next_step_rel,
+                     &burst_samples_left, &burst_wait,
+                     M, interval, is_save]() {
 
-        // バースト中：毎ステップ出力（print + 必要なら保存）
-        if (burst_left > 0) {
+        // NVT_loop では step() の後に t_++ して output_action() を呼ぶので、
+        // callback が呼ばれる時点の run 相対ステップは 1,2,3,... になる。
+        const IntType s_rel = t_ - t0;
+
+        // (A) ログ点の進行（バースト中でも next_step_rel を未来へ進める：スキップ扱い）
+        bool hit_log_point = false;
+        if (s_rel >= next_step_rel) [[unlikely]] {
+            hit_log_point = true;
+            while (s_rel >= next_step_rel) {
+                const double cand_d = std::ceil(static_cast<double>(next_step_rel) * r);
+                const IntType cand = static_cast<IntType>(cand_d);
+                next_step_rel = std::max(next_step_rel + static_cast<IntType>(1), cand);
+            }
+        }
+
+        // (B) ログ点に到達し、かつバースト外ならバースト開始（到達ステップを1点目として即出力）
+        if (hit_log_point && burst_samples_left == 0 && M > 0) {
+            burst_samples_left = M;
+            burst_wait = 0;
+
+            // 1点目（到達ステップ）を即出力
             print_energies();
             if (is_save) {
                 xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
             }
-            --burst_left;
-            return;
+            --burst_samples_left;
+
+            burst_wait = (burst_samples_left > 0) ? interval : 0;
         }
 
-        // バースト中でなければ、サンプル時刻に到達したか判定
-        if (t_curr >= next_time) [[unlikely]] {
-            // 取りこぼし対策：dt が粗くても next_time を t_curr より未来まで進める
-            while (t_curr >= next_time) {
-                next_time *= r;
-            }
-
-            // 到達ステップを含めて M ステップ分のバースト開始
-            burst_left = M;
-
-            // 到達ステップでも出力（M に含める）
-            if (burst_left > 0) {
+        // (C) バースト中の interval 出力
+        if (burst_samples_left > 0) {
+            if (burst_wait == 0) {
                 print_energies();
                 if (is_save) {
                     xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
                 }
-                --burst_left;
+                --burst_samples_left;
+                burst_wait = (burst_samples_left > 0) ? interval : 0;
+            } else {
+                --burst_wait;
             }
         }
     };
 
     NVT_loop(tsim, Thermostat, callback);
 }
+
 
 
 //温度を変化させながらシミュレーション
@@ -305,8 +320,9 @@ void MD::NVT_anneal(const RealType cooling_rate,
                     const RealType targ_temp,
                     const std::string log,
                     const bool is_save,
-                    const IntType N_per_decade,   // ★追加：1 decade あたりのサンプル数 N
-                    const IntType M_burst)        // ★追加：各サンプル点から連続 M ステップ保存/出力
+                    const IntType N_per_decade,
+                    const IntType M_burst,
+                    const IntType interval_burst)
 {
     if (log != "log") {
         return;
@@ -327,64 +343,72 @@ void MD::NVT_anneal(const RealType cooling_rate,
     std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、"
                  "total energy (eV)、temperature (K)" << std::endl;
 
-    // 初期出力
+    // 初期出力（run の t=0）
     print_energies();
     if (is_save) {
         xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
     }
 
-    // ---- 対数サンプリング + バースト設定 ----
-    // 1 decade (= ×10) あたり N 点 → r = 10^(1/N)
-    const int N = (N_per_decade > 0) ? N_per_decade : 1;
-    const int M = (M_burst > 0) ? M_burst : 0;
+    // ---- 対数サンプリング + バースト設定（run 相対ステップで管理） ----
+    const int N = (N_per_decade > 0) ? static_cast<int>(N_per_decade) : 1;
+    const int M = (M_burst > 0) ? static_cast<int>(M_burst) : 0;
+    const int interval = (interval_burst > 0) ? static_cast<int>(interval_burst) : 1;
     const double r = std::pow(10.0, 1.0 / static_cast<double>(N));
 
-    // 初期 decade は dt 起点：dt, dt*r, dt*r^2, ...
-    double next_time = static_cast<double>(dt_real_);
+    const IntType t0 = t_;                  // run 開始時の通算ステップ
+    IntType next_step_rel = static_cast<IntType>(1);
 
-    // バースト残り（到達ステップを含める）
-    int burst_left = 0;
-    // ---- ここまで ----
+    int burst_samples_left = 0;
+    int burst_wait = 0;
 
-    // 1 ステップごとに呼ばれるコールバック
-    auto callback = [this, &next_time, r, &burst_left, M, is_save]() {
-        const double t_curr =
-            static_cast<double>(dt_real_) * static_cast<double>(t_);
+    auto callback = [this, r, t0, &next_step_rel,
+                     &burst_samples_left, &burst_wait,
+                     M, interval, is_save]() {
 
-        // バースト中：毎ステップ出力（print + 必要なら保存）
-        if (burst_left > 0) {
+        const IntType s_rel = t_ - t0;
+
+        // (A) ログ点の進行（スキップ扱いで前進）
+        bool hit_log_point = false;
+        if (s_rel >= next_step_rel) [[unlikely]] {
+            hit_log_point = true;
+            while (s_rel >= next_step_rel) {
+                const double cand_d = std::ceil(static_cast<double>(next_step_rel) * r);
+                const IntType cand = static_cast<IntType>(cand_d);
+                next_step_rel = std::max(next_step_rel + static_cast<IntType>(1), cand);
+            }
+        }
+
+        // (B) バースト開始（到達ステップを1点目として即出力）
+        if (hit_log_point && burst_samples_left == 0 && M > 0) {
+            burst_samples_left = M;
+            burst_wait = 0;
+
             print_energies();
             if (is_save) {
                 xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
             }
-            --burst_left;
-            return;
+            --burst_samples_left;
+
+            burst_wait = (burst_samples_left > 0) ? interval : 0;
         }
 
-        // バースト中でなければ、サンプル時刻に到達したか判定
-        if (t_curr >= next_time) [[unlikely]] {
-            // 取りこぼし対策：dt が粗くても next_time を t_curr より未来まで進める
-            while (t_curr >= next_time) {
-                next_time *= r;
-            }
-
-            // 到達ステップを含めて M ステップ分のバースト開始
-            burst_left = M;
-
-            // 到達ステップでも出力（M に含める）
-            if (burst_left > 0) {
+        // (C) バースト中の interval 出力
+        if (burst_samples_left > 0) {
+            if (burst_wait == 0) {
                 print_energies();
                 if (is_save) {
                     xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
                 }
-                --burst_left;
+                --burst_samples_left;
+                burst_wait = (burst_samples_left > 0) ? interval : 0;
+            } else {
+                --burst_wait;
             }
         }
     };
 
     NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, callback);
 }
-
 
 //=====シミュレーション（1ステップ）=====
 //NVEの1ステップ
