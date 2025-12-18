@@ -501,7 +501,7 @@ void MD::NVT_anneal(const RealType cooling_rate, ThermostatType& Thermostat, con
     }
 }
 
-// 温度変化NVTシミュレーション（logスケールで保存 + 1 decade あたり N 点 + 各点で M ステップ連続保存）
+// 温度変化NVTシミュレーション（dense until safe, then geometric anchor + uniform burst）
 template <typename ThermostatType>
 void MD::NVT_anneal(const RealType cooling_rate,
                     ThermostatType& Thermostat,
@@ -516,87 +516,97 @@ void MD::NVT_anneal(const RealType cooling_rate,
         return;
     }
 
-    // 現在の運動温度を取得して temp_ に同期
+    // ---- Sync current kinetic temperature -> thermostat ----
     temp_ = atoms_.temperature().item<RealType>();
     Thermostat.set_temp(temp_);
     Thermostat.setup(atoms_);
 
-    // NL の作成
-    NL_.generate(atoms_);
-
-    // MLP 推論
-    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
-
-    // ログヘッダ
+    // ---- Header ----
     std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、"
                  "total energy (eV)、temperature (K)" << std::endl;
 
-    // 初期出力（run の t=0）
+    // ---- NL + initial inference ----
+    NL_.generate(atoms_);
+    inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
+
+    // ---- t=0 output (run start) ----
     print_energies();
     if (is_save) {
-        xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+        std::ostringstream meta0;
+        meta0 << "step_rel=0"
+              << " step_abs=" << static_cast<long long>(t_)
+              << " time_fs=" << std::setprecision(16) << 0.0
+              << " sample_type=initial";
+        xyz::save_unwrapped_atoms(traj_path_, atoms_, box_, meta0.str());
     }
 
-    // ---- 対数サンプリング + バースト設定（run 相対ステップで管理） ----
+    // ---- Parameters ----
     const int N = (N_per_decade > 0) ? static_cast<int>(N_per_decade) : 1;
-    const int M = (M_burst > 0) ? static_cast<int>(M_burst) : 0;
+    const int M = (M_burst > 0) ? static_cast<int>(M_burst) : 1;
     const int interval = (interval_burst > 0) ? static_cast<int>(interval_burst) : 1;
-    const double r = std::pow(10.0, 1.0 / static_cast<double>(N));
 
-    const IntType t0 = t_;                  // run 開始時の通算ステップ
-    IntType next_step_rel = static_cast<IntType>(1);
+    // ---- Exact anneal step count (matches your NVT_anneal_loop implementation) ----
+    // 1 step あたりの下降温度
+    const RealType dT = cooling_rate * dt_real_;
+    // 冷却ステップ数（run-relative step の最大値として使う）
+    const IntType quench_steps = static_cast<IntType>(
+        std::ceil((temp_ - targ_temp) / dT)
+    );
+    const long long nsteps = static_cast<long long>(quench_steps);
 
-    int burst_samples_left = 0;
-    int burst_wait = 0;
+    // ---- Compute strict-safe t_safe in "run-relative step" ----
+    // strict: next_anchor - anchor > W, W=(M-1)*interval
+    long long t_safe = 1;
+    if (nsteps > 0) {
+        t_safe = find_t_safe_strict_until(N, M, interval, /*s_max=*/nsteps, /*start_guess=*/1);
+    }
 
-    auto callback = [this, r, t0, &next_step_rel,
-                     &burst_samples_left, &burst_wait,
-                     M, interval, is_save]() {
+    // ---- Instantiate sampler ----
+    DenseThenAnchorBurstSampler sampler(N, M, interval, t_safe);
 
-        const IntType s_rel = t_ - t0;
+    const IntType t0 = t_; // run開始時点の通算ステップ
 
-        // (A) ログ点の進行（スキップ扱いで前進）
-        bool hit_log_point = false;
-        if (s_rel >= next_step_rel) [[unlikely]] {
-            hit_log_point = true;
-            while (s_rel >= next_step_rel) {
-                const double cand_d = std::ceil(static_cast<double>(next_step_rel) * r);
-                const IntType cand = static_cast<IntType>(cand_d);
-                next_step_rel = std::max(next_step_rel + static_cast<IntType>(1), cand);
-            }
-        }
+    // ---- Unified emission lambda ----
+    auto emit = [this, is_save, t0](SampleType type,
+                                    std::optional<long long> burst_id,
+                                    std::optional<int> burst_idx)
+    {
+        const long long s_rel  = static_cast<long long>(t_ - t0);
+        const long long s_abs  = static_cast<long long>(t_);
+        const double time_fs   = static_cast<double>(s_rel) * static_cast<double>(dt_real_);
 
-        // (B) バースト開始（到達ステップを1点目として即出力）
-        if (hit_log_point && burst_samples_left == 0 && M > 0) {
-            burst_samples_left = M;
-            burst_wait = 0;
+        std::ostringstream meta;
+        meta << "step_rel=" << s_rel
+             << " step_abs=" << s_abs
+             << " time_fs=" << std::setprecision(16) << time_fs
+             << " sample_type=" << sample_type_str(type);
 
-            print_energies();
-            if (is_save) {
-                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-            }
-            --burst_samples_left;
+        if (burst_id)  meta << " burst_id=" << *burst_id;
+        if (burst_idx) meta << " burst_idx=" << *burst_idx;
 
-            burst_wait = (burst_samples_left > 0) ? interval : 0;
-        }
+        // energies のログ（従来通り）
+        print_energies();
 
-        // (C) バースト中の interval 出力
-        if (burst_samples_left > 0) {
-            if (burst_wait == 0) {
-                print_energies();
-                if (is_save) {
-                    xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-                }
-                --burst_samples_left;
-                burst_wait = (burst_samples_left > 0) ? interval : 0;
-            } else {
-                --burst_wait;
-            }
+        // trajectory 保存（comment付き）
+        if (is_save) {
+            xyz::save_unwrapped_atoms(traj_path_, atoms_, box_, meta.str());
         }
     };
 
+    // ---- Callback (called every MD step after t_++) ----
+    auto callback = [this, t0, &sampler, &emit]() {
+        const long long s_rel = static_cast<long long>(t_ - t0); // 1,2,3,...
+
+        auto [do_emit, type, bid, bidx] = sampler.should_emit(s_rel);
+        if (do_emit) [[unlikely]] {
+            emit(type, bid, bidx);
+        }
+    };
+
+    // ---- Run loop (temperature schedule handled inside) ----
     NVT_anneal_loop(cooling_rate, Thermostat, targ_temp, callback);
 }
+
 
 //=====シミュレーション（1ステップ）=====
 //NVEの1ステップ
