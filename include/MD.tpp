@@ -64,29 +64,39 @@ static inline long long next_anchor_step(long long anchor_srel, long double r) {
     long double x = (long double)anchor_srel * r - 1e-18L;
     return (long long) std::ceill(x);
 }
+// ---- Safety checker: strict condition until s_max ----
 
-// ---- strict safety check: next_anchor - anchor > W ----
-static bool is_strict_safe_from(long long t0,
-                                long double r,
-                                long long W,
-                                int verify_anchors)
+static bool is_strict_safe_until(long long t0,
+                                 long double r,
+                                 long long W,
+                                 long long s_max)
 {
     long long t = std::max(1LL, t0);
-    for (int i = 0; i < verify_anchors; ++i) {
-        long long tn = next_anchor_step(t, r);
-        if (tn - t <= W) return false; // STRICT
+
+    // t が s_max を超えたら、以降は run で使わないので安全扱い
+    while (t <= s_max) {
+        // 次アンカー計算（オーバーフロー対策）
+        long double xn = (long double)t * r - 1e-18L;
+        if (xn > (long double)std::numeric_limits<long long>::max()) {
+            // 次アンカーが long long に収まらない＝run範囲を超えているとみなしてOK
+            return true;
+        }
+        long long tn = (long long)std::ceill(xn);
+
+        // STRICT: tn - t > W
+        if (tn - t <= W) return false;
+
         t = tn;
     }
     return true;
 }
 
-// ---- find minimal t_safe with exponential + binary search ----
-static long long find_t_safe_strict(int N_per_decade,
-                                   int M_burst,
-                                   int interval_burst,
-                                   long long start_guess = 1,
-                                   int verify_anchors = 800,
-                                   long long max_t = 1000000000000LL)
+static long long find_t_safe_strict_until(int N_per_decade,
+                                         int M_burst,
+                                         int interval_burst,
+                                         long long s_max,
+                                         long long start_guess = 1,
+                                         long long max_t = 1000000000000LL)
 {
     if (N_per_decade < 1) throw std::invalid_argument("N_per_decade must be >= 1");
     if (M_burst < 1) throw std::invalid_argument("M_burst must be >= 1");
@@ -96,22 +106,24 @@ static long long find_t_safe_strict(int N_per_decade,
     const long long W = (long long)(M_burst - 1) * (long long)interval_burst;
 
     long long hi = std::max(1LL, start_guess);
-    while (hi <= max_t && !is_strict_safe_from(hi, r, W, verify_anchors)) {
+    while (hi <= max_t && !is_strict_safe_until(hi, r, W, s_max)) {
         if (hi > max_t / 2) { hi = max_t + 1; break; }
         hi *= 2;
     }
     if (hi > max_t) {
-        throw std::runtime_error("max_t reached in find_t_safe_strict; relax conditions or increase max_t.");
+        throw std::runtime_error("max_t reached in find_t_safe_strict_until; relax conditions or increase max_t.");
     }
 
     long long lo = hi / 2;
     while (lo + 1 < hi) {
         long long mid = lo + (hi - lo) / 2;
-        if (is_strict_safe_from(mid, r, W, verify_anchors)) hi = mid;
+        if (is_strict_safe_until(mid, r, W, s_max)) hi = mid;
         else lo = mid;
     }
     return hi;
 }
+
+
 
 // ---- Combined sampler: dense until t_safe, then anchor+burst ----
 class DenseThenAnchorBurstSampler {
@@ -398,11 +410,8 @@ void MD::NVT(const RealType tsim,
     // ---- Compute strict-safe t_safe in "run-relative step" ----
     // strict: next_anchor - anchor > W, W=(M-1)*interval
     long long t_safe = 1;
-    t_safe = find_t_safe_strict(/*N_per_decade*/N,
-                                /*M_burst*/M,
-                                /*interval_burst*/interval,
-                                /*start_guess*/1,
-                                /*verify_anchors*/800);
+    const long long nsteps = static_cast<long long>(std::llround(tsim / dt_real_));
+    t_safe = find_t_safe_strict_until(N, M, interval, /*s_max=*/nsteps, /*start_guess=*/1);
 
     // ---- Instantiate sampler ----
     DenseThenAnchorBurstSampler sampler(N, M, interval, t_safe);
