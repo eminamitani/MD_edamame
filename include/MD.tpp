@@ -5,6 +5,173 @@
 #include "config.h"
 #include "LJ.hpp"
 
+#include <cmath>
+#include <cstdint>
+#include <optional>
+#include <tuple>
+#include <algorithm>
+#include <stdexcept>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+
+//=====対数サンプラー用関数=====
+// ---- Sample event type (optional) ----
+enum class SampleType { None, Dense, Anchor, Burst };
+
+// ---- Burst controller: absolute-time scheduling (no off-by-one) ----
+struct BurstAbs {
+    int M = 0;
+    int interval = 1;
+
+    bool active = false;
+    int remaining = 0;              // remaining emissions excluding anchor (idx=1..M-1)
+    long long next_step = 0;        // next relative step to emit burst
+
+    long long burst_id = 0;
+    int burst_idx = 0;              // anchor=0, burst=1..M-1
+
+    BurstAbs(int M_burst, int interval_burst)
+        : M(M_burst), interval(std::max(1, interval_burst)) {}
+
+    void trigger(long long anchor_srel) {
+        ++burst_id;
+        burst_idx = 0;
+        remaining = M - 1;
+        active = (remaining > 0);
+        next_step = anchor_srel + interval;
+    }
+
+    bool step(long long s_rel) {
+        if (!active) return false;
+        if (s_rel == next_step) {
+            ++burst_idx;
+            --remaining;
+            if (remaining <= 0) {
+                active = false;
+            } else {
+                next_step += interval;
+            }
+            return true;
+        }
+        return false;
+    }
+};
+
+// ---- Anchor generator: geometric anchors with ceil ----
+static inline long long next_anchor_step(long long anchor_srel, long double r) {
+    // guard tiny floating error before ceil
+    long double x = (long double)anchor_srel * r - 1e-18L;
+    return (long long) std::ceill(x);
+}
+
+// ---- strict safety check: next_anchor - anchor > W ----
+static bool is_strict_safe_from(long long t0,
+                                long double r,
+                                long long W,
+                                int verify_anchors)
+{
+    long long t = std::max(1LL, t0);
+    for (int i = 0; i < verify_anchors; ++i) {
+        long long tn = next_anchor_step(t, r);
+        if (tn - t <= W) return false; // STRICT
+        t = tn;
+    }
+    return true;
+}
+
+// ---- find minimal t_safe with exponential + binary search ----
+static long long find_t_safe_strict(int N_per_decade,
+                                   int M_burst,
+                                   int interval_burst,
+                                   long long start_guess = 1,
+                                   int verify_anchors = 800,
+                                   long long max_t = 1000000000000LL)
+{
+    if (N_per_decade < 1) throw std::invalid_argument("N_per_decade must be >= 1");
+    if (M_burst < 1) throw std::invalid_argument("M_burst must be >= 1");
+    if (interval_burst < 1) throw std::invalid_argument("interval_burst must be >= 1");
+
+    const long double r = std::powl(10.0L, 1.0L / (long double)N_per_decade);
+    const long long W = (long long)(M_burst - 1) * (long long)interval_burst;
+
+    long long hi = std::max(1LL, start_guess);
+    while (hi <= max_t && !is_strict_safe_from(hi, r, W, verify_anchors)) {
+        if (hi > max_t / 2) { hi = max_t + 1; break; }
+        hi *= 2;
+    }
+    if (hi > max_t) {
+        throw std::runtime_error("max_t reached in find_t_safe_strict; relax conditions or increase max_t.");
+    }
+
+    long long lo = hi / 2;
+    while (lo + 1 < hi) {
+        long long mid = lo + (hi - lo) / 2;
+        if (is_strict_safe_from(mid, r, W, verify_anchors)) hi = mid;
+        else lo = mid;
+    }
+    return hi;
+}
+
+// ---- Combined sampler: dense until t_safe, then anchor+burst ----
+class DenseThenAnchorBurstSampler {
+public:
+    DenseThenAnchorBurstSampler(int N_per_decade,
+                                int M_burst,
+                                int interval_burst,
+                                long long t_safe)
+        : N_(N_per_decade),
+          M_(M_burst),
+          interval_(std::max(1, interval_burst)),
+          t_safe_(std::max(1LL, t_safe)),
+          r_(std::powl(10.0L, 1.0L / (long double)N_per_decade)),
+          next_anchor_(t_safe_),
+          burst_(M_burst, interval_burst)
+    {
+        if (N_ < 1) throw std::invalid_argument("N_per_decade must be >= 1");
+        if (M_ < 1) throw std::invalid_argument("M_burst must be >= 1");
+        if (interval_ < 1) throw std::invalid_argument("interval must be >= 1");
+    }
+
+    // returns: (emit?, SampleType, burst_id, burst_idx)
+    std::tuple<bool, SampleType, std::optional<long long>, std::optional<int>>
+    should_emit(long long s_rel)
+    {
+        // phase1: dense
+        if (s_rel < t_safe_) {
+            return {true, SampleType::Dense, std::nullopt, std::nullopt};
+        }
+
+        // phase2: anchor has priority
+        if (s_rel == next_anchor_) {
+            burst_.trigger(s_rel); // anchor itself is idx=0
+            const long long bid = burst_.burst_id;
+            next_anchor_ = next_anchor_step(s_rel, r_);
+            return {true, SampleType::Anchor, bid, 0};
+        }
+
+        // phase2: burst continuation
+        if (burst_.step(s_rel)) {
+            return {true, SampleType::Burst, burst_.burst_id, burst_.burst_idx};
+        }
+
+        return {false, SampleType::None, std::nullopt, std::nullopt};
+    }
+
+    long long t_safe() const { return t_safe_; }
+    long double r() const { return r_; }
+
+private:
+    int N_;
+    int M_;
+    int interval_;
+    long long t_safe_;
+
+    long double r_;
+    long long next_anchor_;
+    BurstAbs burst_;
+};
+
 //=====コンストラクタ=====
 MD::MD(torch::Tensor dt, torch::Tensor cutoff, torch::Tensor margin, std::string data_path, std::string model_path, torch::Device device)
    : dt_(dt), NL_(cutoff, margin, device), device_(device), atoms_(Atoms(device))
@@ -175,8 +342,17 @@ void MD::NVT(const RealType tsim, ThermostatType& Thermostat, const IntType step
     }
 }
 
-// NVTシミュレーション（logスケールで保存 + 1 decade あたり N 点 + 各点で M ステップ連続保存, 連続保存時の間隔も指定できる）
-// decadeはステップ数で判定
+// SampleType -> string
+static inline const char* sample_type_str(SampleType t) {
+    switch (t) {
+        case SampleType::Dense:  return "dense";
+        case SampleType::Anchor: return "anchor";
+        case SampleType::Burst:  return "burst";
+        default:                 return "none";
+    }
+}
+
+// NVTシミュレーション（dense until safe, then geometric anchor + uniform burst）
 template <typename ThermostatType>
 void MD::NVT(const RealType tsim,
              ThermostatType& Thermostat,
@@ -190,90 +366,93 @@ void MD::NVT(const RealType tsim,
         return;
     }
 
-    // 熱浴のセットアップ
+    // ---- Thermostat setup ----
     Thermostat.setup(atoms_);
 
-    // ログの見出しを出力
+    // ---- Header ----
     std::cout << "time (fs)、kinetic energy (eV)、potential energy (eV)、"
                  "total energy (eV)、temperature (K)" << std::endl;
 
-    // NL の作成
+    // ---- NL + initial inference ----
     NL_.generate(atoms_);
-
-    // モデルの推論
     inference::calc_energy_and_force_MLP(module_, atoms_, NL_);
 
-    // 初期状態を 1 回出力（run の t=0 に相当）
+    // ---- t=0 output (run start) ----
+    // NOTE: t=0 も metadata を入れたいなら、emit() を呼ぶ形にしても良いです。
     print_energies();
     if (is_save) {
-        xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
+        // t=0 は run-relative step = 0 として扱う（必要なら）
+        std::ostringstream meta0;
+        meta0 << "step_rel=0"
+              << " step_abs=" << static_cast<long long>(t_)
+              << " time_fs=" << std::setprecision(16) << 0.0
+              << " sample_type=initial";
+        xyz::save_unwrapped_atoms(traj_path_, atoms_, box_, meta0.str());
     }
 
-    // ---- 対数サンプリング + バースト設定（run 相対ステップで管理） ----
+    // ---- Parameters ----
     const int N = (N_per_decade > 0) ? static_cast<int>(N_per_decade) : 1;
-    const int M = (M_burst > 0) ? static_cast<int>(M_burst) : 0;
+    const int M = (M_burst > 0) ? static_cast<int>(M_burst) : 1;
     const int interval = (interval_burst > 0) ? static_cast<int>(interval_burst) : 1;
-    const double r = std::pow(10.0, 1.0 / static_cast<double>(N));
 
-    const IntType t0 = t_;                  // run 開始時の通算ステップ
-    IntType next_step_rel = static_cast<IntType>(1);  // 次のログ点（run 相対ステップ）
+    // ---- Compute strict-safe t_safe in "run-relative step" ----
+    // strict: next_anchor - anchor > W, W=(M-1)*interval
+    long long t_safe = 1;
+    t_safe = find_t_safe_strict(/*N_per_decade*/N,
+                                /*M_burst*/M,
+                                /*interval_burst*/interval,
+                                /*start_guess*/1,
+                                /*verify_anchors*/800);
 
-    int burst_samples_left = 0; // 残りサンプル点数（M点）
-    int burst_wait = 0;         // 次の出力までの待ちステップ
+    // ---- Instantiate sampler ----
+    DenseThenAnchorBurstSampler sampler(N, M, interval, t_safe);
 
-    auto callback = [this, r, t0, &next_step_rel,
-                     &burst_samples_left, &burst_wait,
-                     M, interval, is_save]() {
+    const IntType t0 = t_; // run開始時点の通算ステップ
 
-        // NVT_loop では step() の後に t_++ して output_action() を呼ぶので、
-        // callback が呼ばれる時点の run 相対ステップは 1,2,3,... になる。
-        const IntType s_rel = t_ - t0;
+    // ---- Unified emission lambda ----
+    auto emit = [this, is_save, t0](SampleType type,
+                                    std::optional<long long> burst_id,
+                                    std::optional<int> burst_idx)
+    {
+        // run-relative step (callback 時点の定義に合わせる)
+        const long long s_rel = static_cast<long long>(t_ - t0);
+        const long long s_abs = static_cast<long long>(t_);
 
-        // (A) ログ点の進行（バースト中でも next_step_rel を未来へ進める：スキップ扱い）
-        bool hit_log_point = false;
-        if (s_rel >= next_step_rel) [[unlikely]] {
-            hit_log_point = true;
-            while (s_rel >= next_step_rel) {
-                const double cand_d = std::ceil(static_cast<double>(next_step_rel) * r);
-                const IntType cand = static_cast<IntType>(cand_d);
-                next_step_rel = std::max(next_step_rel + static_cast<IntType>(1), cand);
-            }
-        }
+        // time_fs を出す
+        const double time_fs = static_cast<double>(s_rel) * static_cast<double>(dt_real_);
 
-        // (B) ログ点に到達し、かつバースト外ならバースト開始（到達ステップを1点目として即出力）
-        if (hit_log_point && burst_samples_left == 0 && M > 0) {
-            burst_samples_left = M;
-            burst_wait = 0;
+        // extxyz comment 追記用メタデータ
+        std::ostringstream meta;
+        meta << "step_rel=" << s_rel
+             << " step_abs=" << s_abs
+             << " time_fs=" << std::setprecision(16) << time_fs
+             << " sample_type=" << sample_type_str(type);
 
-            // 1点目（到達ステップ）を即出力
-            print_energies();
-            if (is_save) {
-                xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-            }
-            --burst_samples_left;
+        if (burst_id)  meta << " burst_id=" << *burst_id;
+        if (burst_idx) meta << " burst_idx=" << *burst_idx;
 
-            burst_wait = (burst_samples_left > 0) ? interval : 0;
-        }
+        // energies のログ（従来通り）
+        print_energies();
 
-        // (C) バースト中の interval 出力
-        if (burst_samples_left > 0) {
-            if (burst_wait == 0) {
-                print_energies();
-                if (is_save) {
-                    xyz::save_unwrapped_atoms(traj_path_, atoms_, box_);
-                }
-                --burst_samples_left;
-                burst_wait = (burst_samples_left > 0) ? interval : 0;
-            } else {
-                --burst_wait;
-            }
+        // trajectory 保存（comment付き）
+        if (is_save) {
+            xyz::save_unwrapped_atoms(traj_path_, atoms_, box_, meta.str());
         }
     };
 
+    // ---- Callback (called every MD step after t_++) ----
+    auto callback = [this, t0, &sampler, &emit]() {
+        const long long s_rel = static_cast<long long>(t_ - t0); // 1,2,3,...
+
+        auto [do_emit, type, bid, bidx] = sampler.should_emit(s_rel);
+        if (do_emit) [[unlikely]] {
+            emit(type, bid, bidx);
+        }
+    };
+
+    // ---- Run loop ----
     NVT_loop(tsim, Thermostat, callback);
 }
-
-
 
 //温度を変化させながらシミュレーション
 template <typename ThermostatType>
