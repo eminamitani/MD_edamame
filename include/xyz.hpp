@@ -20,6 +20,11 @@ namespace xyz{
     //構造の保存
     void save_atoms(const std::string& data_path, const Atoms& atoms);
     void save_unwrapped_atoms(const std::string& data_path, const Atoms& atoms, const torch::Tensor& box);
+    //metadata付きで保存
+    void save_unwrapped_atoms(const std::string& data_path,
+                            const Atoms& atoms,
+                            const torch::Tensor& box,
+                            const std::string& extra_comment);
 }
 
 #endif

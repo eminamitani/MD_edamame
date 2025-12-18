@@ -363,43 +363,53 @@ void xyz::save_atoms(const std::string& data_path, const Atoms& atoms){
     output.close();
 }
 
-void xyz::save_unwrapped_atoms(const std::string& data_path, const Atoms& atoms, const torch::Tensor& box){
-    //ファイルを開く
+void xyz::save_unwrapped_atoms(const std::string& data_path,
+                               const Atoms& atoms,
+                               const torch::Tensor& box,
+                               const std::string& extra_comment)
+{
     std::ofstream output(data_path, std::ios::app);
-
-    //開けているか確認
     if(!output.is_open()){
         throw std::runtime_error("出力ファイルを開けませんでした。");
     }
 
-    //書き込み
-    //1行目は原子数
     IntType n_atoms = atoms.size().item<IntType>();
     RealType box_size = atoms.box_size().item<RealType>();
-    output << n_atoms << std::endl;
-    //2行目はコメント行
-    //Lattice
-    output << "Lattice=\"" << box_size << " " << 0.0 << " " << 0.0 << " " 
-                           << 0.0 << " " << box_size << " " << 0.0 << " " 
-                           << 0.0 << " " << 0.0 << " " << box_size << "\"" << " ";
-    //Properties
-    output << "Properties=species:S:1:pos:R:3:force:R:3" << " ";
-    //energy
+
+    // 1行目: 原子数
+    output << n_atoms << "\n";
+
+    // 2行目: extxyz comment 行
+    output << "Lattice=\"" << box_size << " " << 0.0 << " " << 0.0 << " "
+                           << 0.0 << " " << box_size << " " << 0.0 << " "
+                           << 0.0 << " " << 0.0 << " " << box_size << "\" ";
+    output << "Properties=species:S:1:pos:R:3:force:R:3 ";
     output << "energy=" << atoms.potential_energy().item<RealType>() << " ";
-    //pbc
     output << "pbc=\"F F F\"";
 
-    output << std::endl;
-
-    //3行目以降に原子の種類と座標と力
-    for(IntType i = 0; i < n_atoms; i ++){
-        output << atoms.types()[i] << " "
-               << atoms.positions()[i][0].item<RealType>() + box[i][0].item<RealType>() * box_size << " " 
-               << atoms.positions()[i][1].item<RealType>() + box[i][1].item<RealType>() * box_size << " " 
-               << atoms.positions()[i][2].item<RealType>() + box[i][2].item<RealType>() * box_size << " "
-               << atoms.forces()[i][0].item<RealType>() << " " << atoms.forces()[i][1].item<RealType>() << " " << atoms.forces()[i][2].item<RealType>() << std::endl;
+    // 追加メタデータ（空でなければ追記）
+    if (!extra_comment.empty()) {
+        output << " " << extra_comment;
     }
+    output << "\n";
 
-    //ファイルを閉じる
+    // 3行目以降: species pos force
+    for(IntType i = 0; i < n_atoms; i++){
+        output << atoms.types()[i] << " "
+               << atoms.positions()[i][0].item<RealType>() + box[i][0].item<RealType>() * box_size << " "
+               << atoms.positions()[i][1].item<RealType>() + box[i][1].item<RealType>() * box_size << " "
+               << atoms.positions()[i][2].item<RealType>() + box[i][2].item<RealType>() * box_size << " "
+               << atoms.forces()[i][0].item<RealType>() << " "
+               << atoms.forces()[i][1].item<RealType>() << " "
+               << atoms.forces()[i][2].item<RealType>() << "\n";
+    }
     output.close();
+}
+
+// 既存の3引数版は、追加版を呼ぶだけにしてもOK（任意）
+void xyz::save_unwrapped_atoms(const std::string& data_path,
+                               const Atoms& atoms,
+                               const torch::Tensor& box)
+{
+    xyz::save_unwrapped_atoms(data_path, atoms, box, "");
 }
